@@ -1,0 +1,58 @@
+._jsPlumb_overlay { z-index:51; }
+._jsPlumb_endpoint { z-index:21; cursor:pointer; }
+._jsPlumb_connector { z-index:4; }
+
+.endpointTargetLabel {
+    font-family: helvetica;
+    font-size:0.7em;
+    text-align:right;
+}
+
+.unit { 
+    border:1px solid #346789;
+    border-radius:0.5em;
+    width:8em; height:8em;
+    z-index:20;
+    position:absolute;
+    font-family:helvetica;
+    padding:0.2em 0.2em;
+    font-size:0.7em;
+    left: 200px;
+    top: 100px;
+    cursor: move;
+}
+
+.unit:hover {
+    box-shadow: 1px 1px 19px #aaa;
+    -o-box-shadow: 1px 1px 19px #aaa;
+    -webkit-box-shadow: 1px 1px 19px #aaa;
+    -moz-box-shadow: 1px 1px 19px #aaa;
+    opacity:0.6;
+    filter:alpha(opacity=60);
+}
+
+.unit h3 {
+    text-align: center;
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+.dropHover { border:1px solid orange; }
+
+#container {
+    border: 1px solid gray;
+    width: 100%;
+    height: 500px;
+}
+
+.left-panel
+{        
+    width:10%;
+    float:left;            
+}
+
+.right-panel
+{        
+    width:80%;
+    float:left;
+}

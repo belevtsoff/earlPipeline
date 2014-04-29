@@ -1,0 +1,47 @@
+<html>
+  <head>
+    <!--dependencies-->
+    <script type="text/javascript" src="js/libs/jquery-1.10.2.js"></script>
+    <script type="text/javascript" src="js/libs/jquery-ui-1.10.4.js"></script>
+    <script type="text/javascript" src="js/libs/jquery.jsPlumb-1.5.5.js"></script>
+    <script type="text/javascript" src="js/libs/handlebars.js"></script>
+    <script type="text/javascript" src="js/libs/ember.js"></script>
+    <script type="text/javascript" src="js/libs/ember-data.js"></script>
+
+    <!--add code-->
+    <script type="text/javascript" src="js/app.js"></script>
+    <script type="text/javascript" src="js/models.js"></script>
+    <script type="text/javascript" src="js/views.js"></script>
+    <script type="text/javascript" src="js/controllers.js"></script>
+    <script type="text/javascript" src="js/draw_styles.js"></script>
+
+    <!--CSS-->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/ui-lightness/jquery-ui-1.10.4.custom.css">
+  </head>
+  <body>
+    <script type="text/x-handlebars">
+    <div class="left-panel">
+        {{outlet units}}
+    </div>
+    <div class="right-panel">
+        {{outlet pipeline}}
+    </div>
+    </script>
+
+    <script type="text/x-handlebars" data-template-name="metaUnits">
+        {{#each itemController="metaUnit"}}
+            <div>
+                {{typeName}}
+                <button {{action "addToPipeline"}}>+</button>
+            </div>
+        {{/each}}
+    </script>
+
+    <script type="text/x-handlebars" data-template-name="pipeline">
+        {{view App.PplView id="container"}}
+    </script>
+    
+        <!--{{view App.EpicView}}-->
+  </body>
+</html>
