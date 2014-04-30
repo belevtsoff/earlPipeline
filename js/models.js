@@ -11,15 +11,6 @@ App.Edge = DS.Model.extend({
     dstPort: DS.attr('string')
 });
 
-
-App.Pipeline.FIXTURES = 
-    [{
-        id: 1,
-        name: 'Ppl1'
-        //nodes: [],
-        //edges: []
-    }]
-
 App.MetaUnit = DS.Model.extend({
     name: DS.attr('string'),
     inPorts: DS.attr(), // list of strings
@@ -29,9 +20,13 @@ App.MetaUnit = DS.Model.extend({
 App.Unit = DS.Model.extend({
     name: DS.attr('string'),
     type: DS.belongsTo('metaUnit'),
-    x: DS.attr('number'),
-    y: DS.attr('number'),
+    top: DS.attr('number'),
+    left: DS.attr('number'),
 });
+
+
+/* Sample data (for FixtureAdapter) */
+
 
 App.MetaUnit.FIXTURES = [
     {
@@ -65,31 +60,52 @@ App.MetaUnit.FIXTURES = [
 ];
 
 
-
-App.Unit.FIXTURES = [];
-    //{
-        //id: 1, typeName: 'Generator',
-        //inPorts: [],
-        //outPorts: ['out1', 'out2']
-    //},
+App.Unit.FIXTURES = [
+    {
+        id: 1,
+        type: 1,
+        name: 'someGen',
+        top: 100,
+        left: 200,
+    },
     
-    //{
-        //id: 2, typeName: 'Dubler',
-        //inPorts: ['num1'],
-        //outPorts: ['res']
-    //},
+    {
+        id: 2,
+        type: 2,
+        name: 'someDub',
+        top: 200,
+        left: 400,
+    },
 
+    {
+        id: 3,
+        type: 3,
+        name: 'someAdd',
+        top: 20,
+        left: 600,
+    },
 
-    //{
-        //id: 3, typeName: 'Adder',
-        //inPorts: ['num1', 'num2'],
-        //outPorts: ['res']
-    //},
+    {
+        id: 4,
+        type: 4,
+        name: 'somePrint',
+        top: 100,
+        left: 800,
+    },
+];
 
-    //{
-        //id:4,
-        //typeName: "Printer",
-        //inPorts:['in1', 'in2', 'in3'],
-        //outPorts:[],
-    //}
-//];
+App.Pipeline.FIXTURES = [
+    {
+        id: 1,
+        name: 'Ppl1',
+        nodes: [1, 2],
+        edges: []
+    },
+
+    {
+        id: 2,
+        name: 'Ppl2',
+        nodes: [3, 4],
+        edges: []
+    },
+]

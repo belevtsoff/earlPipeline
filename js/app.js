@@ -11,10 +11,17 @@ jsPlumb.bind("ready", function () {
 
 
 App.Router.map(function () {
-    this.resource('pipeline');
+    this.resource('pipelines');
+    this.resource('pipeline', {path: "/pipeline/:pipeline_id"});
 })
 
 App.PipelineRoute = Em.Route.extend({
+    model: function(params) {
+        this.store.find('metaUnit'); //init fixtures
+        this.store.find('unit'); //init fixtures
+        return this.store.find('pipeline', params.pipeline_id)
+    },
+
     renderTemplate: function () {
         this.render('pipeline', {
             into: 'application',
@@ -29,9 +36,8 @@ App.PipelineRoute = Em.Route.extend({
         });
     },
 
-    setupController: function() {
+    setupController: function(pplController, pplModel) {
+        this.controllerFor('pipeline').set('model', pplModel);
         this.controllerFor('metaUnits').set('model', this.store.find('metaUnit'));
-        this.controllerFor('pipeline').set('model', this.store.find('pipeline', 1));
-        App.nodesController.set('model', this.store.find('unit'));
     }
 });

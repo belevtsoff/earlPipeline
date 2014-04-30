@@ -40,9 +40,11 @@
     </script>
 
     <script type="text/x-handlebars" data-template-name="pipeline">
-        {{view App.PplView id="container"}}
+        <div id="container">
+            {{#each node in model.nodes itemController="unit"}}
+                {{view App.Item}}
+            {{/each}}
+        </div>
     </script>
-    
-        <!--{{view App.EpicView}}-->
   </body>
 </html>
