@@ -4,29 +4,27 @@ App.Item = Em.View.extend({
   classNames: ['unit', 'ui-widget-content'],
   didInsertElement: function () {
     var element = this.get('element');
+    var type = this.get('content').get('type');
 
-
-
-    this.addPorts(element);
+    this.addPorts(element, type);
     jsPlumb.draggable(element, {containment: 'parent'});
-    console.log(element);
     console.log(this.get('content').get('name'));
   },
     
   template: Ember.Handlebars.compile(
       '<h3 class="ui-widget-header">\
-        {{view.content.typeName}}\
+        {{view.content.type.name}}\
       </h3>\
       '),
 
   /* Helper methods */
 
-  addPorts: function (element) {
+  addPorts: function (element, type) {
     /* Adds ports to provided DOM element based on the information provided
     * by the corresponding controller */
     var unit = this.get('content');
-    var inPorts = unit.get('inPorts');
-    var outPorts = unit.get('outPorts');
+    var inPorts = type.get('inPorts');
+    var outPorts = type.get('outPorts');
 
     // wourkaround with jQuery
     var jqel = $('#'+element.id);
@@ -39,10 +37,6 @@ App.Item = Em.View.extend({
 
     jqel.append(inPortContainer);
     jqel.append(outPortContainer);
-
-    var spacing = function (i, n) {
-        return (i + 1) / (n + 1);
-    }
 
     /* Add input ports */
     for(var i=0; i<inPorts.length; i++) {
@@ -65,7 +59,6 @@ App.Item = Em.View.extend({
         outPortContainer.append(port);
         jsPlumb.addEndpoint(port, drawStyles.sourceEndpoint);
     }
-
   }
 });
 
