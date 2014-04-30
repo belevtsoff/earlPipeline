@@ -6,6 +6,7 @@ jsPlumb.bind("ready", function () {
   jsPlumb.Defaults.Anchor = ["TopCenter"];
   jsPlumb.Defaults.DragOptions = { cursor: 'wait', zIndex:20 };
   jsPlumb.Defaults.Connector = [ "Bezier", { curviness: 90 } ];
+  jsPlumb.Defaults.Container = "pipeline-container";
 });
 
 
@@ -25,7 +26,7 @@ App.PipelineRoute = Em.Route.extend({
             into: 'application',
             outlet: 'units',
             controller: this.controllerFor('metaUnits')
-        })
+        });
     },
 
     setupController: function() {

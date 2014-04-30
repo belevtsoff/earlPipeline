@@ -34,20 +34,20 @@ App.MetaUnit.FIXTURES = [
     {
         id: 1, typeName: 'Generator',
         inPorts: [],
-        outPorts: ['number1', 'number2']
+        outPorts: ['out1', 'out2']
     },
     
     {
         id: 2, typeName: 'Dubler',
-        inPorts: ['numberIn'],
-        outPorts: ['numberOut']
+        inPorts: ['num1'],
+        outPorts: ['res']
     },
 
 
     {
         id: 3, typeName: 'Adder',
-        inPorts: ['in1', 'in2'],
-        outPorts: ['result']
+        inPorts: ['num1', 'num2'],
+        outPorts: ['res']
     },
 
     {

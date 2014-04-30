@@ -9,13 +9,13 @@
 }
 
 .unit { 
-    border:1px solid #346789;
+    border:1px solid #346789 !important;
     border-radius:0.5em;
-    width:8em; height:8em;
+    width:10em; height:8em;
     z-index:20;
     position:absolute;
     font-family:helvetica;
-    padding:0.2em 0.2em;
+    padding:3px 3px;
     font-size:0.7em;
     left: 200px;
     top: 100px;
@@ -37,6 +37,24 @@
     margin-bottom: 0px;
 }
 
+.port {
+    padding: 0.2em 0.5em;
+}
+
+.ports-in {
+    float: left;
+    width: 50%;
+    text-align: left;
+    /*position: absolute;*/
+}
+
+.ports-out {
+    float: right;
+    width: 50%;
+    text-align: right;
+    /*position: absolute;*/
+}
+
 .dropHover { border:1px solid orange; }
 
 #container {
@@ -45,13 +63,13 @@
     height: 500px;
 }
 
-.left-panel
+.panel-left
 {        
     width:10%;
     float:left;            
 }
 
-.right-panel
+.panel-right
 {        
     width:80%;
     float:left;
