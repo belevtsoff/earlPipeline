@@ -1,0 +1,21 @@
+._jsPlumb_overlay { z-index:51; }
+._jsPlumb_endpoint { z-index:21; cursor:pointer; }
+._jsPlumb_connector { z-index:4; }
+
+#container {
+    border: 1px solid gray;
+    width: 100%;
+    height: 500px;
+}
+
+.panel-left
+{        
+    width:10%;
+    float:left;            
+}
+
+.panel-right
+{        
+    width:80%;
+    float:left;
+}

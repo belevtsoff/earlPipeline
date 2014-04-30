@@ -42,30 +42,18 @@ drawStyles = (function () {
         connectorHoverStyle:mod.connectorHoverStyle,
         maxConnections:-1,
         dragOptions:{},
-        //overlays:[
-            //[ "Label", { 
-                //location:[0.5, 1.5], 
-                //label:"Drag",
-                //cssClass:"endpointSourceLabel" 
-            //} ]
-        //]
+        anchor: [1, 0.5, 1, 0, 4, 0]
     };
     // the definition of target endpoints (will appear when the user drags a
     // connection) 
     mod.targetEndpoint = {
         endpoint:"Dot",					
-        paintStyle:{ fillStyle:"#7AB02C",radius:5},
+        paintStyle:{ fillStyle:"#7AB02C",radius:6},
         hoverPaintStyle:mod.endpointHoverStyle,
         maxConnections:-1,
         dropOptions:{ hoverClass:"hover", activeClass:"active" },
         isTarget:true,			
-        //overlays:[
-            //[ "Label", {
-                //location:[1, 0.5],
-                //label:"Drop",
-                //cssClass:"endpointTargetLabel" 
-            //} ]
-        //]
+        anchor: [0, 0.5, -1, 0, -4, 0]
     };
 
     return mod;

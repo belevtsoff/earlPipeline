@@ -51,12 +51,8 @@ App.Item = Em.View.extend({
             .attr({id:element.id+inPorts[i]});
         port.append(inPorts[i]);
 
-        var dstpoint = $.extend({
-            anchor: [0, 0.5, -1, 0, -4, 0]
-        }, drawStyles.targetEndpoint);
-
         inPortContainer.append(port);
-        jsPlumb.addEndpoint(port, dstpoint);
+        jsPlumb.addEndpoint(port, drawStyles.targetEndpoint);
     }
 
     /* Add output ports */
@@ -66,12 +62,8 @@ App.Item = Em.View.extend({
             .attr({id:element.id+outPorts[i]});
         port.append(outPorts[i]);
 
-        var srcpoint = $.extend({
-            anchor: [1, 0.5, 1, 0, 4, 0]
-        }, drawStyles.sourceEndpoint);
-
         outPortContainer.append(port);
-        jsPlumb.addEndpoint(port, srcpoint);
+        jsPlumb.addEndpoint(port, drawStyles.sourceEndpoint);
     }
 
   }
