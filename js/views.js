@@ -26,8 +26,11 @@ App.Item = Em.View.extend({
     this.get('controller').send("savePosition", this.jqel.position());
 
     for(var i=0; i<this.ports.length; i++) {
-        jsPlumb.detachAllConnections(this.ports[i]);
-        jsPlumb.removeAllEndpoints(this.ports[i]);
+        // silently remove all graphic elements associated with the port.
+        // No event is fired because we don't wanna delete the edges
+        // in the database
+        jsPlumb.detachAllConnections(this.ports[i], {fireEvent: false});
+        jsPlumb.removeAllEndpoints(this.ports[i], {fireEvent: false});
     }
   },
     

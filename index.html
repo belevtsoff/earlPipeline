@@ -22,6 +22,9 @@
   </head>
   <body>
     <script type="text/x-handlebars">
+    <div id="header">
+        <h1>Pipeline Constructor</h1>
+    </div>
     <div class="panel-left">
         {{outlet units}}
     </div>
@@ -41,11 +44,17 @@
 
     <script type="text/x-handlebars" data-template-name="pipeline">
         <div id="container">
-            {{#each node in model.nodes itemController="unit"}}
+            {{#each node in controller.nodes itemController="unit"}}
                 {{view App.Item}}
             {{/each}}
-            {{loadConnections model.edges.content}}
+            {{loadConnections controller.edges.content}}
         </div>
     </script>
+
+    <!--<script type="text/x-handlebars" data-template-name="pipelines">-->
+        <!--{{#each ppl in controller}}-->
+            <!--<div style="display: inline">{{#link-to 'pipeline' ppl}}{{ppl.name}}{{/link-to}}</div>-->
+        <!--{{/each}}-->
+    <!--</script>-->
   </body>
 </html>

@@ -8,6 +8,12 @@
     height: 500px;
 }
 
+#header h1, #header ul {
+    display: inline-block;
+    width: auto;
+    zoom: 1;
+}
+
 .panel-left
 {        
     width:10%;
@@ -16,6 +22,6 @@
 
 .panel-right
 {        
-    width:80%;
+    width:90%;
     float:left;
 }

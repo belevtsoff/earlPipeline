@@ -11,9 +11,9 @@ jsPlumb.bind("ready", function () {
 
 // routes
 App.Router.map(function () {
-    this.resource('pipelines');
+    //this.resource('pipelines');
     this.resource('pipeline', {path: "/pipeline/:pipeline_id"});
-})
+});
 
 App.PipelineRoute = Em.Route.extend({
     model: function(params) {
@@ -23,6 +23,12 @@ App.PipelineRoute = Em.Route.extend({
     },
 
     renderTemplate: function () {
+        //this.render('pipelines', {
+            //into: 'application',
+            //outlet: 'pipelines',
+            //controller: this.controllerFor('pipelines')
+        //});
+
         this.render('pipeline', {
             into: 'application',
             outlet: 'pipeline',
@@ -39,12 +45,24 @@ App.PipelineRoute = Em.Route.extend({
     setupController: function(pplController, pplModel) {
         this.controllerFor('pipeline').set('model', pplModel);
         this.controllerFor('metaUnits').set('model', this.store.find('metaUnit'));
+        //this.controllerFor('pipelines').set('model', this.store.find('pipeline'));
 
         // bind connection events to the proper handler
         jsPlumb.unbind("connection");
+        jsPlumb.unbind("connectionDetached");
+        jsPlumb.unbind("connectionMoved");
         jsPlumb.bind("connection", function (info) {
-            pplController.send('jsPlumbConnect', info);
-        })
+            pplController.send('connect', info);
+            console.log(info);
+        });
+        jsPlumb.bind("connectionDetached", function (info) {
+            pplController.send('disconnect', info);
+            console.log(info);
+        });
+        jsPlumb.bind("connectionMoved", function (info) {
+            pplController.send('move', info);
+            console.log(info);
+        });
     }
 });
 
