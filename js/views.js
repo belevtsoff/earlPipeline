@@ -41,11 +41,13 @@ App.Item = Em.View.extend({
 
 
   initElement: function (element, type) {
+    // TODO: unhardcore port naming convection
     var unit = this.get('controller');
     var inPorts = type.get('inPorts');
     var outPorts = type.get('outPorts');
     this.jqel = $('#'+element.id); // element as jQuery object
     this.ports = []; // helper variable containing all port instances
+    var id = this.get('controller.id');
 
 
     // position the element
@@ -64,10 +66,10 @@ App.Item = Em.View.extend({
     // Create and add ports
 
     var outPortContainer = $('<div></div>')
-        .attr({id:element.id+'-outputs'})
+        .attr({id:id+'_outputs'})
         .addClass("ports-out");
     var inPortContainer = $('<div></div>')
-        .attr({id:element.id+'-inputs'})
+        .attr({id:id+'_inputs'})
         .addClass("ports-in");
 
     this.jqel.append(inPortContainer);
@@ -77,11 +79,13 @@ App.Item = Em.View.extend({
     for(var i=0; i<inPorts.length; i++) {
         var port = $('<div></div>')
             .addClass('port')
-            .attr({id:element.id+inPorts[i]});
+            .attr({id:id+"_"+inPorts[i]});
         port.append(inPorts[i]);
 
         inPortContainer.append(port);
-        jsPlumb.addEndpoint(port, drawStyles.targetEndpoint);
+        jsPlumb.addEndpoint(port, $.extend({
+            uuid: port.attr('id')+"_endp"
+        }, drawStyles.targetEndpoint));
 
         // store port instance for easier cleanup
         this.ports.pushObject(port);
@@ -91,11 +95,13 @@ App.Item = Em.View.extend({
     for (var i=0; i<outPorts.length; i++) {
         var port = $('<div></div>')
             .addClass('port')
-            .attr({id:element.id+outPorts[i]});
+            .attr({id:id+"_"+outPorts[i]});
         port.append(outPorts[i]);
 
         outPortContainer.append(port);
-        jsPlumb.addEndpoint(port, drawStyles.sourceEndpoint);
+        jsPlumb.addEndpoint(port, $.extend({
+            uuid: port.attr('id')+"_endp"
+        }, drawStyles.sourceEndpoint));
 
         // store port instance for easier cleanup
         this.ports.pushObject(port);

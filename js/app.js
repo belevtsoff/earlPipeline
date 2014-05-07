@@ -9,7 +9,7 @@ jsPlumb.bind("ready", function () {
   jsPlumb.Defaults.Container = "pipeline-container";
 });
 
-
+// routes
 App.Router.map(function () {
     this.resource('pipelines');
     this.resource('pipeline', {path: "/pipeline/:pipeline_id"});
@@ -39,5 +39,12 @@ App.PipelineRoute = Em.Route.extend({
     setupController: function(pplController, pplModel) {
         this.controllerFor('pipeline').set('model', pplModel);
         this.controllerFor('metaUnits').set('model', this.store.find('metaUnit'));
+
+        // bind connection events to the proper handler
+        jsPlumb.unbind("connection");
+        jsPlumb.bind("connection", function (info) {
+            pplController.send('jsPlumbConnect', info);
+        })
     }
 });
+

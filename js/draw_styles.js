@@ -30,9 +30,10 @@ drawStyles = (function () {
     // the definition of source endpoints (the small blue ones)
     mod.sourceEndpoint = {
         endpoint:"Dot",
+        uniqueEndpoint: true,
         paintStyle:{ 
             strokeStyle:"#7AB02C",
-            fillStyle:"transparent",
+            fillStyle:"white",
             radius:5,
             lineWidth:2 
         },				
@@ -48,6 +49,7 @@ drawStyles = (function () {
     // connection) 
     mod.targetEndpoint = {
         endpoint:"Dot",					
+        uniqueEndpoint: true,
         paintStyle:{ fillStyle:"#7AB02C",radius:6},
         hoverPaintStyle:mod.endpointHoverStyle,
         maxConnections:-1,

@@ -44,6 +44,7 @@
             {{#each node in model.nodes itemController="unit"}}
                 {{view App.Item}}
             {{/each}}
+            {{loadConnections model.edges.content}}
         </div>
     </script>
   </body>
