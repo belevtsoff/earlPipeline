@@ -1,5 +1,5 @@
 window.App = Ember.Application.create();
-App.ApplicationAdapter = DS.FixtureAdapter;
+//App.ApplicationAdapter = DS.FixtureAdapter;
 
 jsPlumb.bind("ready", function () {
   jsPlumb.setRenderMode(jsPlumb.SVG);
