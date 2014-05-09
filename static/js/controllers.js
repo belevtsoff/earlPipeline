@@ -96,18 +96,20 @@ App.PipelineController = Ember.ObjectController.extend({
 // handlebar helper for initializing connections
 // TODO: put it in a better place
 Ember.Handlebars.helper("loadConnections", function (edges) {
-    for (var i=0; i<edges.length; i++) {
-        var src = edges[i].get('src.id');
-        var srcPort = edges[i].get('srcPort');
-        var dst = edges[i].get('dst.id');
-        var dstPort = edges[i].get('dstPort');
+    if(edges) {
+        for (var i=0; i<edges.length; i++) {
+            var src = edges[i].get('src.id');
+            var srcPort = edges[i].get('srcPort');
+            var dst = edges[i].get('dst.id');
+            var dstPort = edges[i].get('dstPort');
 
-        var connection = jsPlumb.connect({uuids:[
-            src + "_" + srcPort + "_endp",
-            dst + "_" + dstPort + "_endp"
-        ], editable:true, fireEvent: false});
+            var connection = jsPlumb.connect({uuids:[
+                src + "_" + srcPort + "_endp",
+                dst + "_" + dstPort + "_endp"
+            ], editable:true, fireEvent: false});
 
-        // link the underlying edge id to this connection
-        connection.edge_id = edges[i].get('id');
+            // link the underlying edge id to this connection
+            connection.edge_id = edges[i].get('id');
+        }
     }
 });

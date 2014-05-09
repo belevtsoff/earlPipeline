@@ -12,13 +12,13 @@ jsPlumb.bind("ready", function () {
 // routes
 App.Router.map(function () {
     //this.resource('pipelines');
-    this.resource('pipeline', {path: "/pipeline/:pipeline_id"});
+    this.resource('pipeline', {path: "/pipelines/:pipeline_id"});
 });
 
 App.PipelineRoute = Em.Route.extend({
     model: function(params) {
-        this.store.find('metaUnit'); //init fixtures
-        this.store.find('unit'); //init fixtures
+        //this.store.find('metaUnit'); //init fixtures
+        //this.store.find('unit'); //init fixtures
         return this.store.find('pipeline', params.pipeline_id)
     },
 
