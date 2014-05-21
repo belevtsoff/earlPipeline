@@ -18,6 +18,7 @@ App.MetaUnitController = Ember.ObjectController.extend({
             
             // add it to the pipeline
             this.get('controllers.pipeline.nodes').pushObject(unit);
+            unit.save();
         }
     },
 });
@@ -76,11 +77,11 @@ App.PipelineController = Ember.ObjectController.extend({
 
         this.store.find('unit', src[0]).then(function (unit) {
             edge.set("src", unit);
-            edge.save(); // uugh
+            //edge.save(); // uugh
         });
         this.store.find('unit', dst[0]).then(function (unit) {
             edge.set("dst", unit);
-            edge.save();
+            //edge.save();
         });
 
         // this is needed so that if one deletes this edge, the pipeline
@@ -89,7 +90,7 @@ App.PipelineController = Ember.ObjectController.extend({
 
         edge.set("srcPort", src[1]);
         edge.set("dstPort", dst[1]);
-        edge.save();
+        //edge.save();
     }
 })
 
@@ -97,11 +98,12 @@ App.PipelineController = Ember.ObjectController.extend({
 // TODO: put it in a better place
 Ember.Handlebars.helper("loadConnections", function (edges) {
     if(edges) {
-        for (var i=0; i<edges.length; i++) {
-            var src = edges[i].get('src.id');
-            var srcPort = edges[i].get('srcPort');
-            var dst = edges[i].get('dst.id');
-            var dstPort = edges[i].get('dstPort');
+        for (var i=0; i<edges.get('content').length; i++) {
+            var edge = edges.get('content')[i];
+            var src = edge.get('src.id');
+            var srcPort = edge.get('srcPort');
+            var dst = edge.get('dst.id');
+            var dstPort = edge.get('dstPort');
 
             var connection = jsPlumb.connect({uuids:[
                 src + "_" + srcPort + "_endp",
@@ -109,7 +111,7 @@ Ember.Handlebars.helper("loadConnections", function (edges) {
             ], editable:true, fireEvent: false});
 
             // link the underlying edge id to this connection
-            connection.edge_id = edges[i].get('id');
+            connection.edge_id = edge.get('id');
         }
     }
 });

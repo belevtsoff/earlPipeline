@@ -5,12 +5,11 @@
 ppl = {
         'name': 'Ppl1',
         'nodes': ['someGen', 'someAdd'],
-        'edges': [],
+        'edges': ['someGen.out1->someAdd.num1'],
         }
 
 edges = [
         {
-            'id':1,
             'src': 'someGen',
             'srcPort': 'out1',
             'dst': 'someAdd',
@@ -76,16 +75,19 @@ units = [
     },
 ];
 
-def get_units(ids=None):
+def select_items(items, ids, fld='name'):
     if ids:
         select = []
         for id in ids:
-            for u in units:
-                if u['name'] == id:
-                    select.append(u)
+            for item in items:
+                if item[fld] == id:
+                    select.append(item)
         return select
     else:
-        return units
+        return items
+
+def get_units(ids=None):
+    return select_items(units, ids)
 
 def get_metaUnits():
     return metaUnits
@@ -93,8 +95,22 @@ def get_metaUnits():
 def get_pipelines():
     return [ppl]
 
-def get_edges():
-    return edges[0]
+def get_edges(ids=None):
+    def create_edge_id(edge):
+        """
+        returns a string of a form 'srcId.srcPort->dstId.dstPort'
+        """
+        return edge['src']+"."+edge['srcPort']+"->"+edge['dst']+"."+edge['dstPort']
+
+    if ids:
+        select = []
+        for id in ids:
+            for edge in edges:
+                if create_edge_id(edge) == id:
+                    select.append(edge)
+        return select
+    else:
+        return edges
 
 def get_pipeline(id):
     return ppl

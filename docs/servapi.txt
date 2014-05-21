@@ -1,2 +1,3 @@
-Server Api:
-    
+Backend takes care about naming resolution. The basic assumption on the client
+is that names of the units server returns are unique, so that they can be used
+as ids

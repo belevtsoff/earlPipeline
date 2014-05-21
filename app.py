@@ -6,24 +6,30 @@ app = Flask(__name__)
 app.debug=True
 api = Api(app)
 
-def resolve_id(d):
-    def add_id(d):
-        if not d.has_key('id'):
-            d['id'] = d['name']
-
+def resolve_id(d, func):
     if isinstance(d, list):
         for item in d:
-            add_id(item)
+            if not item.has_key('id'):
+                func(item)
     else:
-        add_id(d)
+        func(d)
 
     return d
+
+def create_id_from_name(d):
+    d['id'] = d['name']
+
+def create_edge_id(edge):
+    """
+    returns a string of a form 'srcId.srcPort->dstId.dstPort'
+    """
+    edge['id'] = edge['src']+"."+edge['srcPort']+"->"+edge['dst']+"."+edge['dstPort']
 
 def rootify(d, root):
     return {root: d}
 
-def toJSON(d, root):
-    res = resolve_id(d)
+def toJSON(d, root, id_func=create_id_from_name):
+    res = resolve_id(d, id_func)
     res = rootify(res, root)
     return jsonify(**res)
 
@@ -64,12 +70,24 @@ class Unit(Resource):
     def get(self):
         pass
 
+class Edges(Resource):
+    def get(self):
+        args = parser.parse_args()
+        edges = handlers.get_edges(args['ids[]'])
+        resp = toJSON(edges, 'edges', create_edge_id)
+        return resp
+
+class Edge(Resource):
+    pass
+
+
 api.add_resource(Pipeline, '/pipelines/<string:id>')
 api.add_resource(Units, '/units')
 api.add_resource(Unit, '/units/<string:id>')
 api.add_resource(MetaUnits, '/metaUnits')
 api.add_resource(MetaUnit, '/metaUnits/<string:id>')
-#api.add_resource(Echoe, '/edges/<string:id>')
+api.add_resource(Edges, '/edges')
+api.add_resource(Edge, '/edges/<string:id>')
 
 @app.route('/')
 def index():
