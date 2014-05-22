@@ -3,7 +3,7 @@
 # field will be used as id automatically
 
 ppl = {
-        'name': 'Ppl1',
+        'id': 'Ppl1',
         'nodes': ['someGen', 'someAdd'],
         'edges': ['someGen.out1->someAdd.num1'],
         }
@@ -20,26 +20,26 @@ edges = [
 
 metaUnits = [
     {
-        'name': 'Generator',
+        'id': 'Generator',
         'inPorts': [],
         'outPorts': ['out1', 'out2']
     },
     
     {
-        'name': 'Dubler',
+        'id': 'Dubler',
         'inPorts': ['num1'],
         'outPorts': ['res']
     },
 
 
     {
-        'name': 'Adder',
+        'id': 'Adder',
         'inPorts': ['num1', 'num2'],
         'outPorts': ['res']
     },
 
     {
-        'name': "Printer",
+        'id': "Printer",
         'inPorts':['in1', 'in2', 'in3'],
         'outPorts':[],
     }
@@ -48,34 +48,38 @@ metaUnits = [
 units = [
     {
         'type': 'Generator',
-        'name': 'someGen',
+        'id': 'someGen',
         'top': 200,
         'left': 200,
+        'pipeline': "Ppl1"
     },
     
     {
         'type': 'Dubler',
-        'name': 'someDub',
+        'id': 'someDub',
         'top': 300,
         'left': 400,
+        'pipeline': "Ppl1"
     },
 
     {
         'type': 'Adder',
-        'name': 'someAdd',
+        'id': 'someAdd',
         'top': 120,
         'left': 600,
+        'pipeline': "Ppl1"
     },
 
     {
         'type': 'Printer',
-        'name': 'somePrint',
+        'id': 'somePrint',
         'top': 200,
         'left': 800,
+        'pipeline': "Ppl1"
     },
 ];
 
-def select_items(items, ids, fld='name'):
+def select_items(items, ids, fld='id'):
     if ids:
         select = []
         for id in ids:
@@ -123,4 +127,11 @@ def get_metaUnit(id):
 
 def get_edge(id):
     pass
+
+def set_unit(unit):
+    unit_id = unit['type']+str(len(units))
+    unit['id'] = unit_id
+    units.append(unit)
+    ppl['nodes'].append(unit['id'])
+    return unit
 

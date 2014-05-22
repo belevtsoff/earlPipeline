@@ -29,8 +29,8 @@ def rootify(d, root):
     return {root: d}
 
 def toJSON(d, root, id_func=create_id_from_name):
-    res = resolve_id(d, id_func)
-    res = rootify(res, root)
+    #res = resolve_id(d, id_func)
+    res = rootify(d, root)
     return jsonify(**res)
 
 parser = reqparse.RequestParser()
@@ -66,6 +66,10 @@ class Units(Resource):
         resp = toJSON(units, 'units')
         return resp
 
+    def post(self):
+        unit = request.get_json()['unit']
+        return toJSON(handlers.set_unit(unit), 'unit')
+
 class Unit(Resource):
     def get(self):
         pass
@@ -74,6 +78,7 @@ class Edges(Resource):
     def get(self):
         args = parser.parse_args()
         edges = handlers.get_edges(args['ids[]'])
+        edges = resolve_id(edges, create_edge_id)
         resp = toJSON(edges, 'edges', create_edge_id)
         return resp
 

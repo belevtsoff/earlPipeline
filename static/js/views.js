@@ -9,15 +9,15 @@ App.Item = Em.View.extend({
     var type = this.get('controller').get('type');
 
     // TODO: avoid the ember-data error for wrong indices
-    if (undefined == type.get('name')) {
-        alert('Something is wrong with the type of "{0}"'
-              .replace("{0}", this.get('controller.name')));
-        this.remove();
-        return
-    }
+    //if (undefined == type.get('id')) {
+        //alert('Something is wrong with the type of "{0}"'
+              //.replace("{0}", this.get('controller.name')));
+        //this.remove();
+        //return
+    //}
 
     this.initElement(element, type);
-    console.log(this.get('controller').get('name'));
+    console.log(this.get('controller').get('id'));
   },
 
   // cleanup
@@ -36,7 +36,7 @@ App.Item = Em.View.extend({
     
   template: Ember.Handlebars.compile(
       '<h3 class="ui-widget-header">\
-        {{view.controller.type.name}}\
+        {{view.controller.type.id}}\
       </h3>\
       '),
 

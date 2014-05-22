@@ -10,15 +10,21 @@ App.MetaUnitController = Ember.ObjectController.extend({
     actions: {
         addToPipeline: function() {
             var munit = this.get('model');
+            var ppl = this.get('controllers.pipeline.content');
 
             // create unit from type
             var unit = this.store.createRecord('unit', {});
-            unit.set('name', munit.get('name')+"-"+unit.get('id'));
+            //unit.set('name', munit.get('name')+"-"+unit.get('id'));
             unit.set('type', munit);
+            unit.set('pipeline', ppl);
+
+            // sync and add it to the pipeline
+            // TODO: handle the server error!
+            unit.save().then(function (unit) {
+                ppl.get('nodes').addObject(unit);
+                //ppl.save();
+            });
             
-            // add it to the pipeline
-            this.get('controllers.pipeline.nodes').pushObject(unit);
-            unit.save();
         }
     },
 });
@@ -36,16 +42,22 @@ App.UnitController = Ember.ObjectController.extend({
 App.PipelineController = Ember.ObjectController.extend({
     //needs: ['pipelines'],
     actions: {
+        /* triggered when two units are manually connected */
         connect: function(jsPlumbInfo) {
             var edge = this.store.createRecord('edge', {});
-            this.updateEdge(edge, jsPlumbInfo);
-            this.get('edges').pushObject(edge);
-            edge.save();
-
-            // link the edge id to this connection for easy lookup
-            jsPlumbInfo.connection.edge_id = edge.get('id');
+            var that = this;
+            this.updateEdge(edge, jsPlumbInfo).then(function (result) {
+                that.get('edges').pushObject(edge);
+                return edge.save();
+            }).then(function (success) {
+                // link the edge id to this connection for easy lookup
+                jsPlumbInfo.connection.edge_id = edge.get('id');
+            }, function (error) {
+                // TODO: handle the error
+            });
         },
 
+        /* triggered when two units are manually disconected */
         disconnect: function(jsPlumbInfo) {
             var id = jsPlumbInfo.connection.edge_id;
             if (undefined != id) {
@@ -60,6 +72,8 @@ App.PipelineController = Ember.ObjectController.extend({
             }
         },
 
+        /* triggered when a connection is moved from one port/unit to another
+        * port/unit */
         move: function(jsPlumbInfo) {
             // On move, disconnect the old thing. The new connection event will
             // be fired automatically
@@ -75,15 +89,6 @@ App.PipelineController = Ember.ObjectController.extend({
         var src = cntInfo.sourceId.split("_");
         var dst = cntInfo.targetId.split("_");
 
-        this.store.find('unit', src[0]).then(function (unit) {
-            edge.set("src", unit);
-            //edge.save(); // uugh
-        });
-        this.store.find('unit', dst[0]).then(function (unit) {
-            edge.set("dst", unit);
-            //edge.save();
-        });
-
         // this is needed so that if one deletes this edge, the pipeline
         // relations get updated automatically
         edge.set('pipeline', this.get('model'));
@@ -91,6 +96,20 @@ App.PipelineController = Ember.ObjectController.extend({
         edge.set("srcPort", src[1]);
         edge.set("dstPort", dst[1]);
         //edge.save();
+
+        // create a promise that will be fulfilled after src and dst are found
+        // in the database 
+        var that = this;
+        var lookupPromise = this.store.find('unit', src[0]) //find source
+            .then(function (unit) {
+                edge.set("src", unit);
+                return that.store.find('unit', dst[0]); // then find dst
+            }).then(function (unit) {
+                edge.set("dst", unit);
+            });
+
+        // return the promise
+        return lookupPromise
     }
 })
 
