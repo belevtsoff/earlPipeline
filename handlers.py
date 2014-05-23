@@ -2,11 +2,16 @@
 # return a dictionary. If the dictionary contains no 'id' field, its 'name'
 # field will be used as id automatically
 
-ppl = {
+pipelines = [{
         'id': 'Ppl1',
         'nodes': ['someGen', 'someAdd'],
         'edges': ['someGen.out1->someAdd.num1'],
-        }
+        },
+        {
+        'id': 'Ppl2',
+        'nodes': ['someGen', 'someAdd', 'somePrint'],
+        'edges': ['someGen.out1->someAdd.num1'],
+        }]
 
 edges = [
         {
@@ -97,7 +102,7 @@ def get_metaUnits():
     return metaUnits
 
 def get_pipelines():
-    return [ppl]
+    return pipelines
 
 def get_edges(ids=None):
     def create_edge_id(edge):
@@ -117,7 +122,7 @@ def get_edges(ids=None):
         return edges
 
 def get_pipeline(id):
-    return ppl
+    return filter(lambda p: p['id'] == id, pipelines)[0]
 
 def get_unit(id):
     pass

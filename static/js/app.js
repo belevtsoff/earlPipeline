@@ -1,4 +1,6 @@
-window.App = Ember.Application.create();
+window.App = Ember.Application.create({
+    currentPipeline: ''
+});
 //App.ApplicationAdapter = DS.FixtureAdapter;
 
 jsPlumb.bind("ready", function () {
@@ -11,23 +13,19 @@ jsPlumb.bind("ready", function () {
 
 // routes
 App.Router.map(function () {
-    //this.resource('pipelines');
     this.resource('pipeline', {path: "/pipelines/:pipeline_id"});
 });
 
 App.PipelineRoute = Em.Route.extend({
     model: function(params) {
-        //this.store.find('metaUnit'); //init fixtures
-        //this.store.find('unit'); //init fixtures
+        // When loading a new pipeline, unload all the units and edges from the
+        // cache to avoid naming conflicts
+        this.store.unloadAll('unit');
+        this.store.unloadAll('edge');
         return this.store.find('pipeline', params.pipeline_id)
     },
 
     renderTemplate: function () {
-        //this.render('pipelines', {
-            //into: 'application',
-            //outlet: 'pipelines',
-            //controller: this.controllerFor('pipelines')
-        //});
 
         this.render('pipeline', {
             into: 'application',
@@ -43,6 +41,12 @@ App.PipelineRoute = Em.Route.extend({
     },
 
     setupController: function(pplController, pplModel) {
+        // Update the 'currentPipeline' property. This is needed to form proper
+        // server API calls when working with units/edges. Fired whenever the
+        // route is changed
+        App.set('currentPipeline', pplModel);
+
+        // set up controllers with proper models
         this.controllerFor('pipeline').set('model', pplModel);
         this.controllerFor('metaUnits').set('model', this.store.find('metaUnit'));
         //this.controllerFor('pipelines').set('model', this.store.find('pipeline'));
