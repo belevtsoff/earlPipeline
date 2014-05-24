@@ -10,7 +10,7 @@ App.Edge = DS.Model.extend({
     srcPort: DS.attr('string'), // port instances are not stored
     dst: DS.belongsTo('unit'),
     dstPort: DS.attr('string'),
-    pipeline: DS.belongsTo('pipeline'),
+    //pipeline: DS.belongsTo('pipeline'),
 });
 
 App.MetaUnit = DS.Model.extend({
@@ -22,7 +22,7 @@ App.Unit = DS.Model.extend({
     type: DS.belongsTo('metaUnit'),
     top: DS.attr('number'),
     left: DS.attr('number'),
-    pipeline: DS.belongsTo('pipeline'),
+    //pipeline: DS.belongsTo('pipeline'),
 });
 
 

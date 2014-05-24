@@ -112,5 +112,10 @@ App.Item = Em.View.extend({
     
     // make draggable
     jsPlumb.draggable(element, {containment: 'parent'});
+
+    // subscribe to drop event for position storing
+    this.jqel.on('mouseup', function(event) {
+        unit.send('savePosition', $(this).position());
+    })
   }
 });

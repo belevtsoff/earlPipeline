@@ -12,14 +12,14 @@ pipelines[0].add_unit(backend.get_unit_types()[0](), 'one')
 pipelines[0].add_unit(backend.get_unit_types()[1](), 'two')
 pipelines[0].connect('one', 'out1', 'two', 'in1')
 
-def create_id_from_name(d):
-    d['id'] = d['name']
+#def create_id_from_name(d):
+    #d['id'] = d['name']
 
-def create_edge_id(edge):
-    """
-    returns a string of a form 'srcId.srcPort->dstId.dstPort'
-    """
-    return edge['src']+"."+edge['srcPort']+"->"+edge['dst']+"."+edge['dstPort']
+#def create_edge_id(edge):
+    #"""
+    #returns a string of a form 'srcId.srcPort->dstId.dstPort'
+    #"""
+    #return edge['src']+"."+edge['srcPort']+"->"+edge['dst']+"."+edge['dstPort']
 
 def rootify(root):
     def wrap(f):
@@ -30,10 +30,10 @@ def rootify(root):
         return wrapped_f
     return wrap
 
-def toJSON(d, root, id_func=create_id_from_name):
-    #res = resolve_id(d, id_func)
-    res = rootify(d, root)
-    return jsonify(**res)
+#def toJSON(d, root, id_func=create_id_from_name):
+    ##res = resolve_id(d, id_func)
+    #res = rootify(d, root)
+    #return jsonify(**res)
 
 def find_by_attr(seq, attr, value):
     try:
@@ -124,8 +124,18 @@ class Units(Resource):
 class Unit(Resource):
     def get(self):
         pass
-    def put(self):
-        pass
+    @rootify('unit')
+    @marshal_with(unit_fields)
+    def put(self, **params):
+        ppl = find_by_attr(pipelines, 'name', params['pid'])
+        unit = find_by_attr(ppl.units, 'name', params['id'])
+        req = request.get_json()['unit']
+
+        unit.top = req['top']
+        unit.left = req['left']
+
+        return unit
+
     def delete(self):
         pass
 
