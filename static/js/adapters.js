@@ -11,5 +11,7 @@ App.ApplicationAdapter = DS.RESTAdapter.extend({
         else {
             return this._super(type);
         }
-    }
+    },
+
+    namespace: 'api'
 })
