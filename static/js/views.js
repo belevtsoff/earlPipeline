@@ -23,7 +23,7 @@ App.Item = Em.View.extend({
   // cleanup
   willDestroyElement: function () {
     // TODO: unify this to a single action "sync"
-    this.get('controller').send("savePosition", this.jqel.position());
+    //this.get('controller').send("savePosition", this.jqel.position());
 
     for(var i=0; i<this.ports.length; i++) {
         // silently remove all graphic elements associated with the port.
@@ -92,7 +92,7 @@ App.Item = Em.View.extend({
 
         // store port instance for easier cleanup
         this.ports.pushObject(port);
-    }
+    };
 
     /* Add output ports */
     for (var i=0; i<outPorts.length; i++) {
@@ -108,7 +108,9 @@ App.Item = Em.View.extend({
 
         // store port instance for easier cleanup
         this.ports.pushObject(port);
-    }
+    };
+    
+    // EVENT HOOKS
     
     // make draggable
     jsPlumb.draggable(element, {containment: 'parent'});
@@ -116,6 +118,11 @@ App.Item = Em.View.extend({
     // subscribe to drop event for position storing
     this.jqel.on('mouseup', function(event) {
         unit.send('savePosition', $(this).position());
+    });
+
+    // right click for deletion
+    this.jqel.on("contextmenu", function(event) {
+        unit.send('remove');
     })
   }
 });

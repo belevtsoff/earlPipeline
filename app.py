@@ -4,13 +4,13 @@ import backends.printer as backend
 from functools import wraps
 
 app = Flask(__name__)
-app.debug=True
+#app.debug=True
 api = Api(app)
 
 pipelines = [backend.Pipeline('Ppl1'), backend.Pipeline('Ppl2')]
-pipelines[0].add_unit(backend.get_unit_types()[0](), 'one')
-pipelines[0].add_unit(backend.get_unit_types()[1](), 'two')
-pipelines[0].connect('one', 'out1', 'two', 'in1')
+#pipelines[0].add_unit(backend.get_unit_types()[0](), 'one')
+#pipelines[0].add_unit(backend.get_unit_types()[1](), 'two')
+#pipelines[0].connect('one', 'out1', 'two', 'in1')
 
 #def create_id_from_name(d):
     #d['id'] = d['name']
@@ -96,6 +96,12 @@ class Pipeline(Resource):
     def get(self, **params):
         return find_by_attr(pipelines, 'name', params['pid'])
 
+    # Dummy method, so far
+    @rootify('pipeline')
+    @marshal_with(pipeline_fields)
+    def put(self, **params):
+        return find_by_attr(pipelines, 'name', params['pid'])
+
 class MetaUnits(Resource):
     @rootify('metaUnits')
     @marshal_with(metaUnit_fields)
@@ -128,7 +134,7 @@ class Unit(Resource):
     @marshal_with(unit_fields)
     def put(self, **params):
         ppl = find_by_attr(pipelines, 'name', params['pid'])
-        unit = find_by_attr(ppl.units, 'name', params['id'])
+        unit = ppl.get_unit(params['id'])
         req = request.get_json()['unit']
 
         unit.top = req['top']
@@ -136,8 +142,15 @@ class Unit(Resource):
 
         return unit
 
-    def delete(self):
-        pass
+    @rootify('unit')
+    @marshal_with(unit_fields)
+    def delete(self, **params):
+        ppl = find_by_attr(pipelines, 'name', params['pid'])
+        unit = ppl.get_unit(params['id'])
+        ppl.remove_unit(params['id'])
+
+        return unit
+        
 
 
 class Edges(Resource):

@@ -23,11 +23,15 @@ class Pipeline:
     def remove_unit(self, name):
         unit = self.get_unit(name)
         self.units.remove(unit)
+        isOk = lambda e: not (e.src == name or e.dst == name)
+        new_edges = filter(isOk, self.edges)
+        self.edges = new_edges
 
     def get_port_string(self, src_name, src_port, dst_name, dst_port):
         return self.edges.append(src_name + "." + src_port + "->" + dst_name + "." + dst_port)
 
     def connect(self, src_name, src_port, dst_name, dst_port):
+        raise RuntimeError("cannot connect!")
         edge = Edge(src_name, src_port, dst_name, dst_port)
         self.edges.append(edge)
         return edge

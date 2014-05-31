@@ -22,7 +22,6 @@ App.MetaUnitController = Ember.ObjectController.extend({
             // TODO: handle the server error!
             unit.save().then(function (unit) {
                 ppl.get('nodes').addObject(unit);
-                //ppl.save();
             });
             
         }
@@ -30,11 +29,25 @@ App.MetaUnitController = Ember.ObjectController.extend({
 });
 
 App.UnitController = Ember.ObjectController.extend({
+    needs: ['pipeline'],
     actions:{
         savePosition: function (position) {
             this.set('model.top', position.top);
             this.set('model.left', position.left);
             this.get('model').save();
+        },
+
+        remove: function () {
+            var unit = this.get('model');
+            var that = this;
+            unit.deleteRecord();
+            App.currentPipeline.get('nodes').removeObject(unit);
+            unit.save().then(function () {
+                // reloads edges from the server, because some of them were
+                // deleted after the unit was removed
+                that.store.unloadAll('edge');
+                that.store.find('edge');
+            });
         }
     }
 });
@@ -47,13 +60,21 @@ App.PipelineController = Ember.ObjectController.extend({
             var edge = this.store.createRecord('edge', {});
             var that = this;
             this.updateEdge(edge, jsPlumbInfo).then(function (result) {
-                that.get('edges').pushObject(edge);
                 return edge.save();
             }).then(function (success) {
                 // link the edge id to this connection for easy lookup
                 jsPlumbInfo.connection.edge_id = edge.get('id');
+
+                // add relation to pipeline
+                that.get('edges').pushObject(edge);
+
             }, function (error) {
-                // TODO: handle the error
+                // in failed, remove the rendered connection
+                jsPlumb.detach(jsPlumbInfo.connection, {fireEvent: false});
+
+                // alert the user
+                alert(error.responseJSON.message);
+                console.log(error);
             });
         },
 

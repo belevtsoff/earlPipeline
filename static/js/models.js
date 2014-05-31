@@ -10,7 +10,13 @@ App.Edge = DS.Model.extend({
     srcPort: DS.attr('string'), // port instances are not stored
     dst: DS.belongsTo('unit'),
     dstPort: DS.attr('string'),
-    //pipeline: DS.belongsTo('pipeline'),
+
+    // remove record from cache, if server refused the 'connect' action
+    becameError: function(record, asd) {
+        record.unloadRecord();
+    },
+
+    pipeline: DS.belongsTo('pipeline'),
 });
 
 App.MetaUnit = DS.Model.extend({

@@ -45,7 +45,7 @@
     </script>
 
     <script type="text/x-handlebars" data-template-name="pipeline">
-        <div id="container">
+        <div id="container" oncontextmenu="return false;">
             {{#each node in controller.nodes itemController="unit"}}
                 {{view App.Item}}
             {{/each}}
