@@ -12,7 +12,7 @@ App.Edge = DS.Model.extend({
     dstPort: DS.attr('string'),
 
     // remove record from cache, if server refused the 'connect' action
-    becameError: function(record, asd) {
+    becameError: function(record) {
         record.unloadRecord();
     },
 
@@ -29,6 +29,10 @@ App.Unit = DS.Model.extend({
     top: DS.attr('number'),
     left: DS.attr('number'),
     //pipeline: DS.belongsTo('pipeline'),
+
+    becameError: function(record) {
+        record.unloadRecord();
+    },
 });
 
 

@@ -31,12 +31,13 @@ class Pipeline:
         return self.edges.append(src_name + "." + src_port + "->" + dst_name + "." + dst_port)
 
     def connect(self, src_name, src_port, dst_name, dst_port):
-        raise RuntimeError("cannot connect!")
+        #raise RuntimeError("cannot connect!")
         edge = Edge(src_name, src_port, dst_name, dst_port)
         self.edges.append(edge)
         return edge
 
     def disconnect(self, src_name, src_port, dst_name, dst_port):
+        #raise RuntimeError("cannot disconnect!")
         obj = filter(lambda edge:
                 edge.src == src_name and
                 edge.srcPort == src_port and

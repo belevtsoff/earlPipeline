@@ -4,7 +4,7 @@ import backends.printer as backend
 from functools import wraps
 
 app = Flask(__name__)
-#app.debug=True
+app.debug=True
 api = Api(app)
 
 pipelines = [backend.Pipeline('Ppl1'), backend.Pipeline('Ppl2')]

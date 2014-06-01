@@ -59,9 +59,11 @@ App.PipelineController = Ember.ObjectController.extend({
         connect: function(jsPlumbInfo) {
             var edge = this.store.createRecord('edge', {});
             var that = this;
-            this.updateEdge(edge, jsPlumbInfo).then(function (result) {
+            this.updateEdge(edge, jsPlumbInfo)
+            .then(function (result) {
                 return edge.save();
-            }).then(function (success) {
+            })
+            .then(function (success) {
                 // link the edge id to this connection for easy lookup
                 jsPlumbInfo.connection.edge_id = edge.get('id');
 
@@ -73,7 +75,7 @@ App.PipelineController = Ember.ObjectController.extend({
                 jsPlumb.detach(jsPlumbInfo.connection, {fireEvent: false});
 
                 // alert the user
-                alert(error.responseJSON.message);
+                alert("Cannot connect: " + error.responseJSON.message);
                 console.log(error);
             });
         },
@@ -82,10 +84,20 @@ App.PipelineController = Ember.ObjectController.extend({
         disconnect: function(jsPlumbInfo) {
             var id = jsPlumbInfo.connection.edge_id;
             if (undefined != id) {
-                this.store.find('edge', id).then(function(edge){
+                this.store.find('edge', id)
+                .then(function(edge){
                     edge.deleteRecord();
-                    edge.save();
+                    return edge.save();
                     //alert('deleted');
+                })
+                .then(function (success) {
+                    // do nothing, everything is fine
+                }, function (error, blah) {
+                    // This shouldn't fail under normal circumstances! Only
+                    // report the error.
+                    // TODO: recover the deleted connection and reconnect
+                    // jsPlumb
+                    alert("Something went wrong, can't disconnect! The error is sent to console")
                 });
             }
             else {
@@ -116,7 +128,6 @@ App.PipelineController = Ember.ObjectController.extend({
 
         edge.set("srcPort", src[1]);
         edge.set("dstPort", dst[1]);
-        //edge.save();
 
         // create a promise that will be fulfilled after src and dst are found
         // in the database 
@@ -135,23 +146,12 @@ App.PipelineController = Ember.ObjectController.extend({
 })
 
 // handlebar helper for initializing connections
-// TODO: put it in a better place
+// TODO: put it in a better place, maybe
 Ember.Handlebars.helper("loadConnections", function (edges) {
     if(edges) {
         for (var i=0; i<edges.get('content').length; i++) {
             var edge = edges.get('content')[i];
-            var src = edge.get('src.id');
-            var srcPort = edge.get('srcPort');
-            var dst = edge.get('dst.id');
-            var dstPort = edge.get('dstPort');
-
-            var connection = jsPlumb.connect({uuids:[
-                src + "_" + srcPort + "_endp",
-                dst + "_" + dstPort + "_endp"
-            ], editable:true, fireEvent: false});
-
-            // link the underlying edge id to this connection
-            connection.edge_id = edge.get('id');
+            App.util.plumbConnect(edge);
         }
     }
 });

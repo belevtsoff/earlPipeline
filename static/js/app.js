@@ -70,3 +70,26 @@ App.PipelineRoute = Em.Route.extend({
     }
 });
 
+// some utility functions
+// TODO: better place is to be found for this
+App.util = {
+    /* Given an 'edge' data object, looks up the corresponding graphical
+    * elements and creates a graphical link between the respective ports of the
+    * corresponding units. This function should be used to add a graphical
+    * connection between elements, when the corresponding edge object is
+    * already present in the database */
+    plumbConnect: function (edge) {
+        var src = edge.get('src.id');
+        var srcPort = edge.get('srcPort');
+        var dst = edge.get('dst.id');
+        var dstPort = edge.get('dstPort');
+
+        var connection = jsPlumb.connect({uuids:[
+            src + "_" + srcPort + "_endp",
+            dst + "_" + dstPort + "_endp"
+        ], editable:true, fireEvent: false});
+
+        // link the underlying edge id to this connection
+        connection.edge_id = edge.get('id');
+    }
+}
