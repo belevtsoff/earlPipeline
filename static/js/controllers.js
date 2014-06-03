@@ -34,19 +34,34 @@ App.UnitController = Ember.ObjectController.extend({
         savePosition: function (position) {
             this.set('model.top', position.top);
             this.set('model.left', position.left);
-            this.get('model').save();
+            this.get('model').save()
+            .then(function(success) {
+                // everything is fine
+            }, function (error) {
+                alert("Failed to store element's position. Check out console for details");
+                console.log(error);
+            });
         },
 
         remove: function () {
             var unit = this.get('model');
             var that = this;
-            unit.deleteRecord();
-            App.currentPipeline.get('nodes').removeObject(unit);
-            unit.save().then(function () {
-                // reloads edges from the server, because some of them were
-                // deleted after the unit was removed
+            unit.destroyRecord().then(function () {
+                // reloads edges from the server, because 'edges' array of the
+                // current pipeline might have changed, because some of edges
+                // were deleted after the unit was removed
+                App.currentPipeline.get('nodes').removeObject(unit);
                 that.store.unloadAll('edge');
                 that.store.find('edge');
+
+            }, function(error) {
+                alert("Failed to delete unit. Check out console for details");
+                console.log(error);
+                
+                // a workaround to reload previous configuration from server.
+                // TODO: handle this nicely internally, without reloading the
+                // whole page
+                document.location.reload(true);
             });
         }
     }
@@ -88,16 +103,16 @@ App.PipelineController = Ember.ObjectController.extend({
                 .then(function(edge){
                     edge.deleteRecord();
                     return edge.save();
-                    //alert('deleted');
                 })
                 .then(function (success) {
                     // do nothing, everything is fine
-                }, function (error, blah) {
+                }, function (error) {
                     // This shouldn't fail under normal circumstances! Only
                     // report the error.
                     // TODO: recover the deleted connection and reconnect
                     // jsPlumb
-                    alert("Something went wrong, can't disconnect! The error is sent to console")
+                    alert("Something went wrong, can't disconnect! The error is sent to console");
+                    console.log(error);
                 });
             }
             else {

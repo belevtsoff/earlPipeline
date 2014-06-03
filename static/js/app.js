@@ -57,15 +57,12 @@ App.PipelineRoute = Em.Route.extend({
         jsPlumb.unbind("connectionMoved");
         jsPlumb.bind("connection", function (info) {
             pplController.send('connect', info);
-            console.log(info);
         });
         jsPlumb.bind("connectionDetached", function (info) {
             pplController.send('disconnect', info);
-            console.log(info);
         });
         jsPlumb.bind("connectionMoved", function (info) {
             pplController.send('move', info);
-            console.log(info);
         });
     }
 });

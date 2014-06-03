@@ -1,5 +1,5 @@
 from flask import Flask, request, render_template, jsonify
-from flask_restful import Api, Resource, reqparse, fields, marshal, marshal_with
+from flask_restful import Api, Resource, reqparse, fields, marshal, marshal_with, abort
 import backends.printer as backend
 from functools import wraps
 
@@ -145,6 +145,7 @@ class Unit(Resource):
     @rootify('unit')
     @marshal_with(unit_fields)
     def delete(self, **params):
+        #return abort(403)
         ppl = find_by_attr(pipelines, 'name', params['pid'])
         unit = ppl.get_unit(params['id'])
         ppl.remove_unit(params['id'])

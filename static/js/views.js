@@ -123,6 +123,6 @@ App.Item = Em.View.extend({
     // right click for deletion
     this.jqel.on("contextmenu", function(event) {
         unit.send('remove');
-    })
+    });
   }
 });
