@@ -394,8 +394,7 @@ class Connections(object):
         N, E = self.get_unit_graph()
 
         # find initial nodes
-        nodes_with_input = set([conn[0] for conn in E])
-        init_nodes = N - nodes_with_input
+        init_nodes, _ = self.get_init_term_nodes()
 
         def find_input_set(node):
             I = set()
@@ -444,6 +443,27 @@ class Connections(object):
             E.add((self.split_path(dst)[0], self.split_path(src)[0]))
         
         return N, E
+
+    def get_init_term_nodes(self):
+        """Get sets of initial (no inputs) and terminal (no outputs) nodes
+        
+        Returns
+        -------
+        init_nodes: set of str
+            a set of initial nodes (unit names)
+        term_nodes: set of str
+            a set of terminal nodes (unit names)
+        """
+        N, E = self.get_unit_graph()
+
+        nodes_with_input = set([conn[0] for conn in E])
+        init_nodes = N - nodes_with_input
+
+        nodes_with_output = set([conn[1] for conn in E])
+        term_nodes = N - nodes_with_output
+
+
+        return init_nodes, term_nodes
 
     def disconnect(self, src_name, src_port, dest_name, dest_port):
         """
@@ -560,23 +580,28 @@ class Pipeline(Connections, GenericPipeline):
     """Pipeline class extends 'Connections' to make sure that it contains units
     for reading and writing data, which outline the main data-flow in the
     system."""
-    def __init__(self):
+    def __init__(self, name='UnnamedPpl'):
         super(Pipeline, self).__init__()
-        self._data_reader_name = 'MainDataReader'
-        self._data_writer_name = 'MainDataWriter'
-
-    def add_data_reader(self, unit):
-        self.add_unit(unit, self._data_reader_name)
-
-    def add_data_writer(self, unit):
-        self.add_unit(unit, self._data_reader_name)
+        self.name = name
 
     def run(self):
-        try:
-            self.assert_has_unit(self._data_reader_name)
-            self.assert_has_unit(self._data_writer_name)
-            self.get_unit(self._data_writer).update()
-        except:
-            raise RuntimeError("No data reader/writer set. Please, use "
-                    "'add_data_reader' and 'add_data_writer' to add those "
-                    "units to pipeline, before proceeding.")
+        """Calls 'update' methods on all terminal nodes. If available, also
+        returns the content of their 'result' ports
+        
+        Returns
+        -------
+        results: dict {src_name: object}
+            content of the 'result' ports of the terminal nodes"""
+
+        results = {}
+        _, term_nodes = self.get_init_term_nodes()
+
+        for node_name in term_nodes:
+            unit = self.get_unit(node_name)
+            unit.update()
+            try:
+                results[node_name] = unit.read_port('result')
+            except:
+                pass
+
+        return results
