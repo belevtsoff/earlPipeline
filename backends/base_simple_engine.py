@@ -510,11 +510,11 @@ class Connections(object):
         unit = self.get_unit(unit_name)
 
         for dest_path, src_path in self._connections.items():
-            src_unit, _ = self.split_path(src_path)
-            dest_unit, _ = self.split_path(dest_path)
+            src_unit, src_port = self.split_path(src_path)
+            dest_unit, dest_port = self.split_path(dest_path)
 
             if src_unit == unit_name or dest_unit == unit_name:
-                self.disconnect(dest_path)
+                self.disconnect(src_unit, src_port, dest_unit, dest_port)
 
         unit.pipeline = None
         del self._units.by_name[unit_name]
