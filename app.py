@@ -1,6 +1,6 @@
 from flask import Flask, request, render_template, jsonify
 from flask_restful import Api, Resource, reqparse, fields, marshal, marshal_with, abort
-import backends.printer as backend
+import backends.calculator as backend
 from functools import wraps
 import time
 
@@ -9,18 +9,6 @@ app.debug=True
 api = Api(app)
 
 pipelines = [backend.Pipeline('Ppl1'), backend.Pipeline('Ppl2')]
-#pipelines[0].add_unit(backend.get_unit_types()[0](), 'one')
-#pipelines[0].add_unit(backend.get_unit_types()[1](), 'two')
-#pipelines[0].connect('one', 'out1', 'two', 'in1')
-
-#def create_id_from_name(d):
-    #d['id'] = d['name']
-
-#def create_edge_id(edge):
-    #"""
-    #returns a string of a form 'srcId.srcPort->dstId.dstPort'
-    #"""
-    #return edge['src']+"."+edge['srcPort']+"->"+edge['dst']+"."+edge['dstPort']
 
 def rootify(root):
     def wrap(f):
@@ -30,11 +18,6 @@ def rootify(root):
             return jsonify(data)
         return wrapped_f
     return wrap
-
-#def toJSON(d, root, id_func=create_id_from_name):
-    ##res = resolve_id(d, id_func)
-    #res = rootify(d, root)
-    #return jsonify(**res)
 
 def find_by_attr(seq, attr, value):
     try:
@@ -56,10 +39,20 @@ class EdgeIdField(fields.Raw):
     def format(self, value):
         return marshal(value, {'id': fields.String})['id']
 
+class MetaUnitPorts(fields.Raw):
+    """A hack to marshal over class methods. 'get_unit_types' returns classes,
+    and they don't have properties. This field reads calls specified class
+    method and converts its return value to list of strings"""
+    def format(self, value):
+        ports = value()
+
+        # uugh
+        return marshal({'p': ports}, {'p': fields.List(fields.String)})['p']
+
 metaUnit_fields = {
     'id': fields.String(attribute='__name__'),
-    'inPorts': fields.List(fields.String, attribute='in_ports'),
-    'outPorts': fields.List(fields.String, attribute='out_ports')
+    'inPorts': MetaUnitPorts(attribute='get_in_ports'),
+    'outPorts': MetaUnitPorts(attribute='get_out_ports')
 }
 
 unit_fields = {
@@ -145,15 +138,9 @@ class Unit(Resource):
 
         return unit
 
-    @rootify('unit')
-    @marshal_with(unit_fields)
     def delete(self, **params):
         ppl = find_by_attr(pipelines, 'name', params['pid'])
-        unit = ppl.get_unit(params['id'])
         ppl.remove_unit(params['id'])
-
-        return unit
-        
 
 
 class Edges(Resource):
@@ -173,10 +160,6 @@ class Edges(Resource):
         
 
 class Edge(Resource):
-    #def get(self):
-        #pass
-    #def put(self):
-        #pass
     def delete(self, **params):
         ppl = find_by_attr(pipelines, 'name', params['pid'])
         edge = find_by_attr(ppl.edges, 'id', params['id'])
@@ -188,7 +171,7 @@ class Launcher(Resource):
         ppl = find_by_attr(pipelines, 'name', params['pid'])
 
         time.sleep(1)
-        return ppl.run()
+        return str(ppl.run())
 
 
 api.add_resource(Pipelines, '/api/pipelines')
