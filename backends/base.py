@@ -19,16 +19,20 @@ class GenericUnit(object):
         """Name of this unit instance"""
         pass
 
-    @abstractproperty
-    def in_ports(self):
-        """A property that should return a list of names of available input
-        ports"""
+    @abstractmethod
+    def get_in_ports(cls):
+        """A class method that should return a list of names of available input
+        ports.
+        
+        IMPORTANT: it HAS to be overloaded with '@classmethod' decorator!"""
         pass
 
-    @abstractproperty
-    def out_ports(self):
-        """A property that should return a list of names of available output
-        ports"""
+    @abstractmethod
+    def get_out_ports(cls):
+        """A class method that should return a list of names of available
+        output ports
+        
+        IMPORTANT: it HAS to be overloaded with '@classmethod' decorator!"""
         pass
 
 

@@ -126,14 +126,14 @@ class Unit(GenericUnit):
     def name(self):
         return self.get_name()
 
-    @property
-    def in_ports(self):
-        return [name for name, t in self.get_ports_dict().items()
+    @classmethod
+    def get_in_ports(cls):
+        return [name for name, t in cls.get_ports_dict().items()
                 if t == "InPort"]
 
-    @property
-    def out_ports(self):
-        return [name for name, t in self.get_ports_dict().items()
+    @classmethod
+    def get_out_ports(cls):
+        return [name for name, t in cls.get_ports_dict().items()
                 if t == "OutPort"]
     
     # Main implementation
