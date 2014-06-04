@@ -10,7 +10,10 @@ class Pipeline:
         self.edges = []
 
     def run(self):
-        graph = "Units: " + str(self.units) + "\nEdges: " + str(self.edges)
+        graph = "Units: " +\
+                repr([unit.name for unit in self.units])+\
+                "\n\nEdges: " +\
+                repr([edge.id for edge in self.edges])
         return graph
 
     def get_unit(self, name):

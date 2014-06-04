@@ -69,6 +69,9 @@ App.UnitController = Ember.ObjectController.extend({
 
 App.PipelineController = Ember.ObjectController.extend({
     //needs: ['pipelines'],
+    executionResult: null,
+    isRunning: false,
+
     actions: {
         /* triggered when two units are manually connected */
         connect: function(jsPlumbInfo) {
@@ -130,6 +133,34 @@ App.PipelineController = Ember.ObjectController.extend({
                 sourceId: jsPlumbInfo.originalSourceId,
                 targetId: jsPlumbInfo.originalTargetId,
             }, jsPlumbInfo));
+        },
+        
+        /* Execute the current pipeline and get the data */
+        run: function() {
+            this.set("isRunning", true);
+
+            // TODO: fix this evil code repetition
+            var url = this.store.adapterFor(this).namespace
+                + "/pipelines/" + App.currentPipeline.get("id")
+                + "/run"
+            var that = this;
+            $.getJSON(url)
+            .then(function(response) {
+                that.set("executionResult", response.result);
+                that.set("isRunning", false);
+            }, function (error) {
+                alert("An error occurred: " + error.responseText);
+                that.set("isRunning", false);
+            });
+            //var sleep = function(millis, callback) {
+                //setTimeout(function()
+                    //{ callback(); } , millis);
+            //};
+            //var that = this;
+            //sleep(1000, function () {
+                //that.set("executionResult", "This output is generated on client for testing purposes!!");
+                //that.set("isRunning", false);
+            //});
         }
     },
 

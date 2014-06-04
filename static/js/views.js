@@ -36,7 +36,7 @@ App.Item = Em.View.extend({
     
   template: Ember.Handlebars.compile(
       '<h3 class="ui-widget-header">\
-        {{view.controller.type.id}}\
+        {{view.controller.id}}\
       </h3>\
       '),
 
@@ -125,4 +125,11 @@ App.Item = Em.View.extend({
         unit.send('remove');
     });
   }
+});
+
+
+/* Displays the output of the server, after it has ran the pipeline */
+App.OutputView = Ember.View.extend({
+    tagName: "aside",
+    templateName: "pipeline-output",
 });

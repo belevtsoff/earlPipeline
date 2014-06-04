@@ -51,6 +51,23 @@
             {{/each}}
             {{loadConnections controller.edges.content}}
         </div>
+
+        <div id="result-box">
+            {{view App.OutputView}}
+        </div>
+
+    </script>
+
+    <script type="text/x-handlebars" data-template-name="pipeline-output">
+        <button {{action "run"}}>Execute</button>
+        <h3>Output:</h3>
+        {{#if isRunning}}
+            <img src="static/css/ajax-loader.gif">
+        {{else}}
+            {{#if executionResult}}
+                <div style="white-space: pre-wrap;">{{executionResult}}</div>
+            {{/if}}
+        {{/if}}
     </script>
 
     <!--<script type="text/x-handlebars" data-template-name="pipelines">-->

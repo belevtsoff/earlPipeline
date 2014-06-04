@@ -2,6 +2,7 @@ from flask import Flask, request, render_template, jsonify
 from flask_restful import Api, Resource, reqparse, fields, marshal, marshal_with, abort
 import backends.printer as backend
 from functools import wraps
+import time
 
 app = Flask(__name__)
 app.debug=True
@@ -124,6 +125,8 @@ class Units(Resource):
         cls = find_by_attr(backend.get_unit_types(), '__name__', req['type'])
         unit = cls()
         ppl.add_unit(unit, req['type'].lower()+str(len(ppl.units)))
+
+        
         
         return unit
 
@@ -145,7 +148,6 @@ class Unit(Resource):
     @rootify('unit')
     @marshal_with(unit_fields)
     def delete(self, **params):
-        #return abort(403)
         ppl = find_by_attr(pipelines, 'name', params['pid'])
         unit = ppl.get_unit(params['id'])
         ppl.remove_unit(params['id'])
@@ -180,8 +182,18 @@ class Edge(Resource):
         edge = find_by_attr(ppl.edges, 'id', params['id'])
         ppl.disconnect(edge.src, edge.srcPort, edge.dst, edge.dstPort)
 
+class Launcher(Resource):
+    @rootify('result')
+    def get(self, **params):
+        ppl = find_by_attr(pipelines, 'name', params['pid'])
+
+        time.sleep(1)
+        return ppl.run()
+
+
 api.add_resource(Pipelines, '/api/pipelines')
 api.add_resource(Pipeline, '/api/pipelines/<string:pid>')
+api.add_resource(Launcher, '/api/pipelines/<string:pid>/run')
 
 api.add_resource(Units, '/api/pipelines/<string:pid>/units')
 api.add_resource(Unit, '/api/pipelines/<string:pid>/units/<string:id>')
@@ -196,8 +208,5 @@ def index():
 	return render_template('index.html')
 
 if __name__ == '__main__':
-	#db.create_all()
-	"""db.session.add(TodoModel("Test"))
-	db.session.commit()"""
 	app.run()
 
