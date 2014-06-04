@@ -318,6 +318,11 @@ class Connections(object):
         dest_port: str
             Name of the destination port. The destination port needs to be of
             the type 'InPort'
+
+        Returns
+        -------
+        edge: Edge
+            edge instance that has just been created
         """
 
         src_path = self.make_path(src_name, src_port)
@@ -337,6 +342,8 @@ class Connections(object):
         else:
             raise ValueError("Input port %s is already connected to some port (%s)"
                     % (dest_path, self._connections[dest_path]))
+
+        return self.edge_from_path(src_path, dest_path)
 
     def assert_valid_path(self, path, port_type=None):
         """

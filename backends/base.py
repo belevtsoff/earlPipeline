@@ -89,7 +89,8 @@ class GenericPipeline(object):
     @abstractmethod
     def connect(self, src_name, src_port, dest_name, dest_port):
         """
-        Adds connection between two ports
+        Adds connection between two ports. MUST return Edge instance which was
+        just created
 
         Parameters
         ----------
@@ -101,6 +102,11 @@ class GenericPipeline(object):
             Name of the destination unit.
         dest_port: str
             Name of the destination port.
+
+        Returns
+        -------
+        edge: Edge
+            edge instance that has just been created
         """
         pass
 
