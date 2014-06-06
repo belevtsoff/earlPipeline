@@ -32,13 +32,12 @@ App.Item = Em.View.extend({
         jsPlumb.detachAllConnections(this.ports[i], {fireEvent: false});
         jsPlumb.removeAllEndpoints(this.ports[i], {fireEvent: false});
     }
+
+    // clean-up settings dialogs
+    $('#'+this.get('controller.id')+'-settings').remove();
   },
     
-  template: Ember.Handlebars.compile(
-      '<h3 class="ui-widget-header">\
-        {{view.controller.id}}\
-      </h3>\
-      '),
+  templateName: 'single-unit',
 
   /* Helper methods */
 
@@ -50,6 +49,7 @@ App.Item = Em.View.extend({
     this.jqel = $('#'+element.id); // element as jQuery object
     this.ports = []; // helper variable containing all port instances
     var id = this.get('controller.id');
+    var dialog_id = id + "-settings";
 
     // position the element
     
@@ -63,9 +63,12 @@ App.Item = Em.View.extend({
         })
     }
 
-    //Create and add ports
+    // Create and add ports
     this.appendPorts(inPorts, 'in')
     this.appendPorts(outPorts, 'out')
+
+    // Create settings dialog
+    this.appendSettingsDialog(dialog_id);
     
 
     // EVENT HOOKS
@@ -73,14 +76,21 @@ App.Item = Em.View.extend({
     // make draggable
     jsPlumb.draggable(element, {containment: 'parent'});
 
+    // on middle mouse click, delete unit
+    this.jqel.on('click', function (event) {
+        unit.send('remove');
+    });
+    
     // subscribe to drop event for position storing
     this.jqel.on('mouseup', function(event) {
-        unit.send('savePosition', $(this).position());
+        // only on left mouse action
+        if (event.which == 1)
+            unit.send('savePosition', $(this).position());
     });
 
     // right click for deletion
     this.jqel.on("contextmenu", function(event) {
-        unit.send('remove');
+        $("#" + dialog_id).dialog("open");
     });
   },
 
@@ -129,7 +139,30 @@ App.Item = Em.View.extend({
             // store port instance for easier cleanup
             this.ports.pushObject(port);
         };
-    }
+    },
+
+    /* Creates and appends settings dialog to the body of the page. Created
+     * with jQuery UI.
+     *
+     * @param {string} dialog_id Unique id to be given to the corresponding DOM
+     *      element.
+     */
+    appendSettingsDialog: function (dialog_id) {
+        var dialog = $('<div></div>')
+            .attr({
+                id: dialog_id,
+                title: "Settings for \"" + this.get('controller.id') + "\"",
+            });
+
+        dialog.append("Settings are not yet implemented");
+
+        $('#body').append(dialog);
+
+        dialog.dialog({
+            autoOpen: false,
+            modal: true,
+        });
+    },
 });
 
 
