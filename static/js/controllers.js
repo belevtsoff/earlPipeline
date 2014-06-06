@@ -165,23 +165,23 @@ App.PipelineController = Ember.ObjectController.extend({
     },
 
     updateEdge: function(edge, cntInfo) {
-        var src = cntInfo.sourceId.split("_");
-        var dst = cntInfo.targetId.split("_");
+        var src = App.util.split_port_endp_id(cntInfo.sourceId);
+        var dst = App.util.split_port_endp_id(cntInfo.targetId);
 
         // this is needed so that if one deletes this edge, the pipeline
         // relations get updated automatically
         edge.set('pipeline', this.get('model'));
 
-        edge.set("srcPort", src[1]);
-        edge.set("dstPort", dst[1]);
+        edge.set("srcPort", src.port_name);
+        edge.set("dstPort", dst.port_name);
 
         // create a promise that will be fulfilled after src and dst are found
         // in the database 
         var that = this;
-        var lookupPromise = this.store.find('unit', src[0]) //find source
+        var lookupPromise = this.store.find('unit', src.unit_name) //find source
             .then(function (unit) {
                 edge.set("src", unit);
-                return that.store.find('unit', dst[0]); // then find dst
+                return that.store.find('unit', dst.unit_name); // then find dst
             }).then(function (unit) {
                 edge.set("dst", unit);
             });

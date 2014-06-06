@@ -44,14 +44,12 @@ App.Item = Em.View.extend({
 
 
   initElement: function (element, type) {
-    // TODO: unhardcore port naming convection
     var unit = this.get('controller');
     var inPorts = type.get('inPorts');
     var outPorts = type.get('outPorts');
     this.jqel = $('#'+element.id); // element as jQuery object
     this.ports = []; // helper variable containing all port instances
     var id = this.get('controller.id');
-
 
     // position the element
     
@@ -65,51 +63,11 @@ App.Item = Em.View.extend({
         })
     }
 
-
-    // Create and add ports
-
-    var outPortContainer = $('<div></div>')
-        .attr({id:id+'_outputs'})
-        .addClass("ports-out");
-    var inPortContainer = $('<div></div>')
-        .attr({id:id+'_inputs'})
-        .addClass("ports-in");
-
-    this.jqel.append(inPortContainer);
-    this.jqel.append(outPortContainer);
-
-    /* Add input ports */
-    for(var i=0; i<inPorts.length; i++) {
-        var port = $('<div></div>')
-            .addClass('port')
-            .attr({id:id+"_"+inPorts[i]});
-        port.append(inPorts[i]);
-
-        inPortContainer.append(port);
-        jsPlumb.addEndpoint(port, $.extend({
-            uuid: port.attr('id')+"_endp"
-        }, drawStyles.targetEndpoint));
-
-        // store port instance for easier cleanup
-        this.ports.pushObject(port);
-    };
-
-    /* Add output ports */
-    for (var i=0; i<outPorts.length; i++) {
-        var port = $('<div></div>')
-            .addClass('port')
-            .attr({id:id+"_"+outPorts[i]});
-        port.append(outPorts[i]);
-
-        outPortContainer.append(port);
-        jsPlumb.addEndpoint(port, $.extend({
-            uuid: port.attr('id')+"_endp"
-        }, drawStyles.sourceEndpoint));
-
-        // store port instance for easier cleanup
-        this.ports.pushObject(port);
-    };
+    //Create and add ports
+    this.appendPorts(inPorts, 'in')
+    this.appendPorts(outPorts, 'out')
     
+
     // EVENT HOOKS
     
     // make draggable
@@ -124,7 +82,54 @@ App.Item = Em.View.extend({
     this.jqel.on("contextmenu", function(event) {
         unit.send('remove');
     });
-  }
+  },
+
+  /* Create port container, fill it with ports and append them to current
+   * element
+   *
+   * @param {list of string} ports A list of port names to add
+   * @param {string} port_type Ports' type ('in' or 'out')
+   * 
+   * @returns {Object}
+   */
+    appendPorts: function (ports, port_type) {
+        var unit_id = this.get('controller.id');
+        var container = $('<div></div>');
+        var style;
+
+        // set container's id and class depending on the port type
+        if (port_type == "in") {
+            container = container           
+                .attr({id:unit_id+'_inputs'})
+                .addClass("ports-in");
+            style = drawStyles.targetEndpoint;
+        }
+        else if (port_type == 'out') {
+            container = container           
+                .attr({id:unit_id+'_outputs'})
+                .addClass("ports-out");
+            style = drawStyles.sourceEndpoint;
+        }
+
+        // append container
+        this.jqel.append(container);
+
+        // create and append ports
+        for (var i=0; i<ports.length; i++) {
+            var port = $('<div></div>')
+                .addClass('port')
+                .attr({id: App.util.create_port_id(unit_id, ports[i])});
+            port.append(ports[i]);
+
+            container.append(port);
+            jsPlumb.addEndpoint(port, $.extend({
+                uuid: App.util.create_endpoint_id(unit_id, ports[i])
+            }, style));
+
+            // store port instance for easier cleanup
+            this.ports.pushObject(port);
+        };
+    }
 });
 
 

@@ -70,6 +70,10 @@ App.PipelineRoute = Em.Route.extend({
 // some utility functions
 // TODO: better place is to be found for this
 App.util = {
+    // many underscores to avoid conflicts
+    id_template: "uname___%@___pname___%@___%@",
+    id_regexp: "uname___(.*)___pname___(.*)___(?:prt|endp)",
+
     /* Given an 'edge' data object, looks up the corresponding graphical
     * elements and creates a graphical link between the respective ports of the
     * corresponding units. This function should be used to add a graphical
@@ -82,11 +86,65 @@ App.util = {
         var dstPort = edge.get('dstPort');
 
         var connection = jsPlumb.connect({uuids:[
-            src + "_" + srcPort + "_endp",
-            dst + "_" + dstPort + "_endp"
+            this.create_endpoint_id(src, srcPort),
+            this.create_endpoint_id(dst, dstPort)
         ], editable:true, fireEvent: false});
 
         // link the underlying edge id to this connection
         connection.edge_id = edge.get('id');
-    }
+    },
+
+    /* Used to create a unique port identifier string, which consists of an if
+     * of a containing unit, and the name of the port itself. Such identifiers
+     * are then used by jsPlumb to avoid naming conflicts, because it doesn't
+     * know about the existence of units, only about ports, and their names are
+     * only guaranteed to be unique within a unit. Therefore, a unit name is
+     * required to construct a unique port id.
+     *
+     * Neither unit nor port names should contain columns or other special
+     * characters, except minus or underscore
+     *
+     * @param {string} unit_name Name of the containing unit
+     * @param {string} port_name Name of the port
+     *
+     * @returns {string} A unique port identifier */
+    create_port_id: function (unit_name, port_name) {
+        return Em.String.fmt(this.id_template, [unit_name, port_name, "prt"])
+    },
+
+    /* Create unique endpoint identifier. Same as 'create_port_id', but with
+     * appended ending
+     *
+     * @param {string} unit_name Name of the containing unit
+     * @param {string} port_name Name of the port
+     *
+     * @returns {string} A unique endpoint identifier
+     * */
+    create_endpoint_id: function (unit_name, port_name) {
+        return Em.String.fmt(this.id_template, [unit_name, port_name, "endp"])
+    },
+
+    /* Splits a unique port or endpoint id into unit_name and port_name. The
+     * main assumption is that neither unit nor port names contain columns.
+     *
+     * @param {string} uid A port or endpoint id to split
+     *
+     * @returns {Object} an object containing two string fields: 'unit_name'
+     * and 'port_name'
+     */
+    split_port_endp_id: function (uid) {
+        var re = RegExp(this.id_regexp);
+        var m = re.exec(uid);
+
+        if (m) {
+            return {
+                unit_name: m[1],
+                port_name: m[2]
+            }
+        }
+
+        else {
+            throw "Wrong port identifier! Make sure your backend doesn't have special symbols in the port names";
+        }
+    },
 }
