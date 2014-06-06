@@ -188,15 +188,16 @@ class Unit(GenericUnit):
 
         self.assert_has_port(name, OutPort)
 
-        if self._output.has_key(name):
+        # TODO: return caching back, and make it smart
+        #if self._output.has_key(name):
+            #return self._output[name]
+        #else:
+        self.update()
+        try:
             return self._output[name]
-        else:
-            self.update()
-            try:
-                return self._output[name]
-            except:
-                raise IOError("The '%s' port's content was never written!"
-                        % name)
+        except:
+            raise IOError("The '%s' port's content was never written!"
+                    % name)
 
     @classmethod
     def get_ports_dict(cls):
