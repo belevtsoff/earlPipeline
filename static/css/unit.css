@@ -1,7 +1,7 @@
 /* Styling of a single element on the pipeline */
 
 .unit { 
-    border:1px solid Black !important;
+    border:1px solid Green !important;
     width:7em;
     z-index:20;
     position:absolute;

@@ -3,6 +3,7 @@ from flask_restful import Api, Resource, reqparse, fields, marshal, marshal_with
 import backends.calculator as backend
 from functools import wraps
 import time
+import json
 
 app = Flask(__name__)
 app.debug=True
@@ -49,6 +50,26 @@ class MetaUnitPorts(fields.Raw):
         # uugh
         return marshal({'p': ports}, {'p': fields.List(fields.String)})['p']
 
+class UnitParameters(fields.Raw):
+    def format(self, parameters):
+        result = {}
+
+        parameter_fields = {
+            'name': fields.String,
+            'type': fields.String(attribute='parameter_type'),
+        }
+
+        for par_name, item in parameters.items():
+
+            parameter = marshal(item, parameter_fields)
+            # TODO: maybe this is too insecure
+            parameter['value'] = item['value']
+            parameter['args'] = item['parameter_args']
+
+            result[par_name] = parameter
+
+        return result
+
 metaUnit_fields = {
     'id': fields.String(attribute='__name__'),
     'inPorts': MetaUnitPorts(attribute='get_in_ports'),
@@ -58,6 +79,9 @@ metaUnit_fields = {
 unit_fields = {
     'id': fields.String(attribute='name'),
     'type': fields.String(attribute='__class__.__name__'),
+    # TODO: figure out where is the bug. For now, just convert the thing to a
+    # string
+    'parameters': UnitParameters(attribute='parameters_info'),
     'top': fields.Integer(default=150),
     'left': fields.Integer(default=150)
 }
@@ -118,23 +142,27 @@ class Units(Resource):
         cls = find_by_attr(backend.get_unit_types(), '__name__', req['type'])
         unit = cls()
         ppl.add_unit(unit, req['type'].lower()+str(len(ppl.units)))
-
-        
         
         return unit
 
 class Unit(Resource):
     def get(self):
         pass
+
     @rootify('unit')
     @marshal_with(unit_fields)
     def put(self, **params):
         ppl = find_by_attr(pipelines, 'name', params['pid'])
         unit = ppl.get_unit(params['id'])
         req = request.get_json()['unit']
+        par_info = unit.parameters_info
 
         unit.top = req['top']
         unit.left = req['left']
+
+        for par_name, parameter in req['parameters'].items():
+            type_func = par_info[par_name]['value_type']
+            unit.set_parameter(par_name, type_func(parameter['value']))
 
         return unit
 

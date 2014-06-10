@@ -1,7 +1,7 @@
 App.Item = Em.View.extend({
   /* ember view setup */
   tagName: 'div',
-  classNames: ['unit', 'panel', 'panel-primary'],
+  classNames: ['unit', 'panel', 'panel-success'],
 
 
   didInsertElement: function () {
@@ -152,7 +152,6 @@ App.Item = Em.View.extend({
      */
     appendSettingsDialog: function(dialog_id) {
         var that = this;
-        var parameters = this.get('controller.parameters');     
 
         // Build a bootstrap dialog
         var dialog = new BootstrapDialog({
@@ -160,9 +159,6 @@ App.Item = Em.View.extend({
             message: "", // generated when shown
             id: dialog_id,
             autodestroy: false,
-            data: {
-                'parameters': this.get('controller.parameters')
-            },
 
             buttons: [{
                 label: 'Ok',
@@ -188,7 +184,7 @@ App.Item = Em.View.extend({
             }],
 
             onshow: function(dialog) {
-                dialog.setMessage(that.createForm(dialog.getData('parameters')));
+                dialog.setMessage(that.createForm(that.get('controller.parameters')));
             }
         });
 
@@ -212,9 +208,9 @@ App.Item = Em.View.extend({
             .addClass('form-horizontal')
             .attr({role: 'form'});
 
-        for (var i = 0; i < parameters.length; i++) {
+        for (var par_name in parameters) {
             var par_id = this.get('controller.id') + "-parameter-"
-                + parameters[i].name;
+                + par_name;
 
             var group = $('<div />')
                 .addClass('form-group');
@@ -223,12 +219,12 @@ App.Item = Em.View.extend({
                 .attr({for: par_id})
                 .addClass('control-label')
                 .addClass('col-sm-5')
-                .append(parameters[i].name);
+                .append(par_name);
 
             var input = $('<div />')
                 .addClass('col-sm-5')
-                .append(this.createInputElement(parameters[i])
-                    .attr({id: par_id, name: parameters[i].name}));
+                .append(this.createInputElement(parameters[par_name])
+                    .attr({id: par_id, name: par_name}));
 
             group.append(label).append(input).appendTo(form);
         }

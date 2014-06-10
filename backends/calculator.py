@@ -1,7 +1,7 @@
 # Example backend, which performs simple calculations. It implements
 # simple_graph_engine API
 
-from base_simple_engine import Pipeline, Unit, InPort, OutPort
+from base_simple_engine import Pipeline, Unit, InPort, OutPort, Parameter
 
 class Numbers(Unit):
     zero = OutPort('zero')
@@ -10,6 +10,12 @@ class Numbers(Unit):
     three = OutPort('three')
     four = OutPort('four')
     five = OutPort('five')
+    int_port = OutPort('int_port')
+    flt_port = OutPort('flt_port')
+
+    num1 = Parameter('num1', 'dropdown', int, 12, items=[1, 5, 8, 12, 14])
+    num2 = Parameter('num2', 'input', float, 5.9, datatype='number')
+
 
     def update(self):
         self.zero = 0.0
@@ -18,6 +24,8 @@ class Numbers(Unit):
         self.three = 3.0
         self.four = 4.0
         self.five = 5.0
+        self.int_port = self.num1
+        self.flt_port = self.num2
 
 class Div(Unit):
     num1 = InPort('num1')

@@ -7,6 +7,7 @@ equipping it with a simple engine
 """
 
 from abc import ABCMeta, abstractmethod, abstractproperty
+import inspect
 
 class GenericUnit(object):
     """
@@ -35,6 +36,35 @@ class GenericUnit(object):
         IMPORTANT: it HAS to be overloaded with '@classmethod' decorator!"""
         pass
 
+    @abstractmethod
+    def get_parameter(self, name):
+        """Getter for a parameter. Unit parameters are exposed via 'Parameter'
+        descriptors."""
+        pass
+
+    @abstractmethod
+    def set_parameter(self, name, value):
+        """Setter for a parameter. Unit parameters are exposed via 'Parameter'
+        descriptors."""
+        pass
+
+    # Partial implementation. These methods must NOT be overloaded
+    @property
+    def parameters_info(self):
+        parameters = {}
+        cls = self.__class__
+        isparameter = lambda p: issubclass(type(p), Parameter)
+        for name, p in inspect.getmembers(cls, isparameter):
+            parameters[p.name] = {
+                'name': p.name,
+                'parameter_type': p.parameter_type,
+                'value_type': p.value_type, # for internal usage
+                'value': getattr(self, p.name),
+                'parameter_args': p.parameter_args
+            }
+
+        return parameters
+            
 
 class GenericPipeline(object):
     """This is the base class for 'Pipeline'"""
@@ -148,3 +178,53 @@ class Edge(object):
         return self.src+"."+self.srcPort+"->"+self.dst+"."+self.dstPort
 
     id = property(_get_id)
+
+
+# Parameter descriptor
+class Parameter(object):
+    """Descriptor class for unit parameter. Is uses abstract methods
+    'get_parameter' and 'set_parameter' on the underlying unit instance for
+    getting/setting itself."""
+    def __init__(self, name, parameter_type, value_type, default_value, **parameter_args):
+        """Initialize parameter.
+
+        Parameters
+        ----------
+        name: str
+            Name of the parameter
+        parameter_type: str
+            Type of the parameter. This field will be sent to the frontend to
+            render appropriate input field for this parameter
+        value_type: type or callable
+            Python type or callable, used to cast the string, returned by the
+            frontend, to a valid python type
+        default_value: object
+            default value of the parameter
+        parameter_args: kwargs (value: JSON string)
+            Arguments to be passed to the front-end along with the parameter
+            type. These arguments are used by front-end to render the
+            appropriate input for this parameter. Refer to the frontend
+            documentation to see which types are supported and what arguments
+            do they require.
+        """
+
+        self.name = name
+        self.parameter_type = parameter_type
+        self.value_type = value_type
+        self.default_value = default_value
+        self.parameter_args = parameter_args
+        self.init_flag_attr = '_%s_initialized' % self.name
+
+    def __get__(self, obj, objtype):
+        # for inspection
+        if not obj:
+            return self
+
+        if not hasattr(obj, self.init_flag_attr):
+            setattr(obj, self.init_flag_attr, True)
+            obj.set_parameter(self.name, self.default_value)
+
+        return obj.get_parameter(self.name)
+
+    def __set__(self, obj, value):
+        obj.set_parameter(self.name, value)

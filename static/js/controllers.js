@@ -44,7 +44,18 @@ App.UnitController = Ember.ObjectController.extend({
         },
 
         saveSettings: function(settings) {
-            console.log(settings);
+            var unit = this.get('model');
+
+            for (var par_name in settings) {
+                unit.get('parameters.'+par_name).value = settings[par_name];
+            }
+
+            unit.save().then(function(success) {
+                // all ok
+            }, function(error) {
+                BootstrapDialog.alert({message: "Failed to store element's parameters. Check out console for details", type: "type-warning"});
+                console.log(error);
+            });
         },
 
         remove: function() {

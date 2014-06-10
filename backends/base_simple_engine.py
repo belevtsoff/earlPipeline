@@ -8,7 +8,7 @@ and graph management systems. Otherwise, one should implement 'GenericUnit' and
 'GenericPipeline' directly.
 """
 
-from base import GenericUnit, GenericPipeline, Edge
+from base import GenericUnit, GenericPipeline, Edge, Parameter
 from abc import ABCMeta, abstractmethod
 from bidict import namedbidict
 import inspect
@@ -238,6 +238,12 @@ class Unit(GenericUnit):
 
         raise ValueError("Unit %s doesn't have an OutPort named %s"
                 % (cls.__name__, name))
+
+    def get_parameter(self, name):
+        return getattr(self, "__" + name)
+
+    def set_parameter(self, name, value):
+        setattr(self, "__" + name, value)
 
 
 class ProcessingUnit(Unit):
