@@ -29,6 +29,41 @@ App.Unit = DS.Model.extend({
     top: DS.attr('number'),
     left: DS.attr('number'),
     //pipeline: DS.belongsTo('pipeline'),
+    
+    // Unit settings. This field is expected to be a JSON data of the form:
+    //
+    // {
+    //    name: parameter's name,
+    //    type: one of the known to frontend types,
+    //    value: value of the parameter,
+    //    args: {  # custom arguments, relevant to this type
+    //              arg_name: arg_value,
+    //              ...
+    //          }
+    // }
+    parameters: DS.attr(null, {defaultValue:
+        function() {
+            return [{
+                name: 'dropdownPar',
+                type: 'dropdown',
+                value: 'high',
+                args: {
+                    items: ['low', 'medium','high']
+                }
+            }, {
+                name: 'numberPar',
+                type: 'input',
+                value: 14.5,
+                args: {
+                    datatype: 'number',
+                },
+            }, {
+                name: 'boolPar',
+                type: 'boolean',
+                value: 'false',
+            }]
+        }
+    }),
 
     becameError: function(record) {
         record.unloadRecord();

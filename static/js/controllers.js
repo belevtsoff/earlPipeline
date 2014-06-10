@@ -44,7 +44,7 @@ App.UnitController = Ember.ObjectController.extend({
         },
 
         saveSettings: function(settings) {
-            alert(settings);
+            console.log(settings);
         },
 
         remove: function() {

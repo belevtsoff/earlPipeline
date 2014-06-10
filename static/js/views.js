@@ -151,19 +151,34 @@ App.Item = Em.View.extend({
      *      element.
      */
     appendSettingsDialog: function(dialog_id) {
-        var that = this;        
+        var that = this;
+        var parameters = this.get('controller.parameters');     
 
         // Build a bootstrap dialog
         var dialog = new BootstrapDialog({
-            title: "title",
-            message: "sdfsdf",
+            title: "Settings for " + this.get('controller.id'),
+            message: "", // generated when shown
             id: dialog_id,
             autodestroy: false,
+            data: {
+                'parameters': this.get('controller.parameters')
+            },
 
             buttons: [{
-                label: 'Save',
+                label: 'Ok',
                 action: function(dialog) {
-                    that.get('controller').send('saveSettings', {});                    
+                    var form = dialog.getMessage();
+
+                    // grab values from all the fields in the form
+                    var parameters = {};
+                    $.each(form.serializeArray(), function(i, field) {
+                        parameters[field.name] = field.value;
+                    });
+
+                    // send the data to the controller for persisting
+                    that.get('controller').send('saveSettings', parameters);
+
+                    dialog.close();
                 }
             }, {
                 label: 'Cancel',
@@ -171,11 +186,131 @@ App.Item = Em.View.extend({
                     dialog.close();
                 }
             }],
+
+            onshow: function(dialog) {
+                dialog.setMessage(that.createForm(dialog.getData('parameters')));
+            }
         });
 
         dialog.realize();
         $('body').append(dialog.getModal());
 
+    },
+
+    /* Returns a DOM element, which represents a form with all input objects
+     * corresponding to a given parameters array.
+     *
+     * @param {Array} parameters Parameters to generate input for. Each item
+     *     object is expected to be of the form, specified in the 'unit' model
+     *     description
+     *
+     * @returns {Object} DOM element
+     */
+    createForm: function(parameters) {
+        // Generate the content of the dialog (i.e. parameter settings)
+        var form = $('<form />')
+            .addClass('form-horizontal')
+            .attr({role: 'form'});
+
+        for (var i = 0; i < parameters.length; i++) {
+            var par_id = this.get('controller.id') + "-parameter-"
+                + parameters[i].name;
+
+            var group = $('<div />')
+                .addClass('form-group');
+
+            var label = $('<label />')
+                .attr({for: par_id})
+                .addClass('control-label')
+                .addClass('col-sm-5')
+                .append(parameters[i].name);
+
+            var input = $('<div />')
+                .addClass('col-sm-5')
+                .append(this.createInputElement(parameters[i])
+                    .attr({id: par_id, name: parameters[i].name}));
+
+            group.append(label).append(input).appendTo(form);
+        }
+
+        return form
+    },
+
+    /* Returns a DOM element, which represents an input DOM object,
+     * corresponding to a given type (e.g. dropdown menu for 'dropdown' type),
+     * with default values set.
+     *
+     * If 'type' is unknown, return simple text field
+     *
+     * @param {Object} parameter Parameter to generate input for. Parameter
+     *     object is expected to be of the form, specified in the 'unit' model
+     *     description
+     *
+     * @returns {Object} DOM element
+     */
+    createInputElement: function(parameter) {
+        switch(parameter.type) {
+            case 'dropdown':
+                return this.createDropdownInput(parameter);
+            case 'input':
+                return this.createFieldInput(parameter, parameter.args.datatype);
+            case 'boolean':
+                return this.createDropdownInput($.extend(parameter, {
+                args: {
+                    items: ['true', 'false']
+                }
+            }))
+            default:
+                return this.createFieldInput(parameter, 'text');
+        }
+    },
+
+    /* Returns a DOM element for a dropdown input, using the contents of the
+     * provided 'parameter' argument.
+     *
+     * @param {Object} parameter Parameter to generate input for. Parameter
+     *     object is expected to be of the form, specified in the 'unit' model
+     *     description
+     *
+     * @returns {Object} DOM element for dropdown
+     */
+    createDropdownInput: function(parameter) {
+        var items = parameter.args.items;
+        var select = $('<select />')
+            .addClass('form-control');
+
+        for (var i = 0; i < items.length; i++) {
+            var option = $('<option />', {value: items[i], text: items[i]});
+            if (items[i] == parameter.value)
+                option.attr({selected: 'selected'});
+
+            option.appendTo(select);
+        }
+
+        return select
+    },
+
+    /* Returns a DOM element for a text input, using the contents of the
+     * provided 'parameter' argument.
+     *
+     * @param {Object} parameter Parameter to generate input for. Parameter
+     *     object is expected to be of the form, specified in the 'unit' model
+     *     description
+     * @param {String} datatype Specifies what kind of data is to be entered
+     *     (e.g. number, text, email, etc.)
+     *
+     * @returns {Object} DOM element for string
+     */
+    createFieldInput: function(parameter, datatype) {
+        var input = $('<input />')
+            .addClass('form-control')
+            .attr({
+                type: datatype,
+                name: parameter.name,
+                value: parameter.value,
+            });
+
+        return input;
     },
 });
 
