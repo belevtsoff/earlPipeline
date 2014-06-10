@@ -31,7 +31,7 @@ App.MetaUnitController = Ember.ObjectController.extend({
 App.UnitController = Ember.ObjectController.extend({
     needs: ['pipeline'],
     actions:{
-        savePosition: function (position) {
+        savePosition: function(position) {
             this.set('model.top', position.top);
             this.set('model.left', position.left);
             this.get('model').save()
@@ -43,7 +43,11 @@ App.UnitController = Ember.ObjectController.extend({
             });
         },
 
-        remove: function () {
+        saveSettings: function(settings) {
+            alert(settings);
+        },
+
+        remove: function() {
             var unit = this.get('model');
             var that = this;
             unit.destroyRecord().then(function () {

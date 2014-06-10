@@ -7,6 +7,8 @@
     <script type="text/javascript" src="{{url_for('static', filename='js/libs/handlebars.js')}}"></script>
     <script type="text/javascript" src="{{url_for('static', filename='js/libs/ember.js')}}"></script>
     <script type="text/javascript" src="{{url_for('static', filename='js/libs/ember-data.js')}}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='js/libs/bootstrap.js')}}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='js/libs/bootstrap-dialog.js')}}"></script>
 
     <!-- application code-->
     <script type="text/javascript" src="{{url_for('static', filename='js/app.js')}}"></script>
@@ -19,7 +21,9 @@
     <!--CSS-->
     <link rel="stylesheet" href="{{url_for('static', filename='css/main.css')}}">
     <link rel="stylesheet" href="{{url_for('static', filename='css/unit.css')}}">
-    <link rel="stylesheet" href="{{url_for('static', filename='css/ui-lightness/jquery-ui-1.10.4.custom.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', filename='css/bootstrap.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', filename='css/bootstrap-theme.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', filename='css/bootstrap-dialog.css')}}">
   </head>
   <body>
   {% raw %}
@@ -71,9 +75,9 @@
     </script>
 
     <script type="text/x-handlebars" data-template-name="single-unit">
-        <h3 class="ui-widget-header">
+        <div class='panel-heading'>
             {{view.controller.id}}
-        </h3>
+        </div>
     </script>
 
     <!--<script type="text/x-handlebars" data-template-name="pipelines">-->

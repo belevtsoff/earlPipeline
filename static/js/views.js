@@ -1,12 +1,12 @@
 App.Item = Em.View.extend({
   /* ember view setup */
   tagName: 'div',
-  classNames: ['unit', 'ui-widget-content'],
+  classNames: ['unit', 'panel', 'panel-primary'],
 
 
   didInsertElement: function () {
-    var element = this.get('element');
-    var type = this.get('controller').get('type');
+    // jQuery handle on this element
+    this.domElement = $('#' + this.get('element.id'));
 
     // TODO: avoid the ember-data error for wrong indices
     //if (undefined == type.get('id')) {
@@ -16,7 +16,7 @@ App.Item = Em.View.extend({
         //return
     //}
 
-    this.initElement(element, type);
+    this.initElement();
     console.log(this.get('controller').get('id'));
   },
 
@@ -42,22 +42,25 @@ App.Item = Em.View.extend({
   /* Helper methods */
 
 
-  initElement: function (element, type) {
+  initElement: function () {
+    var type = this.get('controller.type');
     var unit = this.get('controller');
     var inPorts = type.get('inPorts');
     var outPorts = type.get('outPorts');
-    this.jqel = $('#'+element.id); // element as jQuery object
     this.ports = []; // helper variable containing all port instances
     var id = this.get('controller.id');
     var dialog_id = id + "-settings";
 
+    // create div for unit content
+    this.domBody = $('<div></div>').addClass('panel-body')
+    this.domElement.append(this.domBody);
+
     // position the element
-    
     var top = unit.get('top');
     var left = unit.get('left');
 
     if(undefined != top && undefined != left) {
-        this.jqel.css({
+        this.domElement.css({
             top: top,
             left: left
         })
@@ -74,23 +77,23 @@ App.Item = Em.View.extend({
     // EVENT HOOKS
     
     // make draggable
-    jsPlumb.draggable(element, {containment: 'parent'});
+    jsPlumb.draggable(this.domElement, {containment: 'parent'});
 
     // on middle mouse click, delete unit
-    this.jqel.on('click', function (event) {
+    this.domElement.on('click', function (event) {
         unit.send('remove');
     });
     
     // subscribe to drop event for position storing
-    this.jqel.on('mouseup', function(event) {
+    this.domElement.on('mouseup', function(event) {
         // only on left mouse action
         if (event.which == 1)
             unit.send('savePosition', $(this).position());
     });
 
     // right click for deletion
-    this.jqel.on("contextmenu", function(event) {
-        $("#" + dialog_id).dialog("open");
+    this.domElement.on("contextmenu", function(event) {
+        $("#" + dialog_id).modal("show");
     });
   },
 
@@ -122,7 +125,7 @@ App.Item = Em.View.extend({
         }
 
         // append container
-        this.jqel.append(container);
+        this.domBody.append(container);
 
         // create and append ports
         for (var i=0; i<ports.length; i++) {
@@ -147,21 +150,32 @@ App.Item = Em.View.extend({
      * @param {string} dialog_id Unique id to be given to the corresponding DOM
      *      element.
      */
-    appendSettingsDialog: function (dialog_id) {
-        var dialog = $('<div></div>')
-            .attr({
-                id: dialog_id,
-                title: "Settings for \"" + this.get('controller.id') + "\"",
-            });
+    appendSettingsDialog: function(dialog_id) {
+        var that = this;        
 
-        dialog.append("Settings are not yet implemented");
+        // Build a bootstrap dialog
+        var dialog = new BootstrapDialog({
+            title: "title",
+            message: "sdfsdf",
+            id: dialog_id,
+            autodestroy: false,
 
-        $('#body').append(dialog);
-
-        dialog.dialog({
-            autoOpen: false,
-            modal: true,
+            buttons: [{
+                label: 'Save',
+                action: function(dialog) {
+                    that.get('controller').send('saveSettings', {});                    
+                }
+            }, {
+                label: 'Cancel',
+                action: function(dialog) {
+                    dialog.close();
+                }
+            }],
         });
+
+        dialog.realize();
+        $('body').append(dialog.getModal());
+
     },
 });
 

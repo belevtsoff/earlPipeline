@@ -1,15 +1,10 @@
 /* Styling of a single element on the pipeline */
 
 .unit { 
-    border:1px solid #346789 !important;
-    border-radius:0.5em;
-    width:10em;
-    /*height:8em;*/
+    border:1px solid Black !important;
+    width:7em;
     z-index:20;
     position:absolute;
-    font-family:helvetica;
-    padding:3px 3px;
-    font-size:0.7em;
     left: 200px;
     top: 100px;
     cursor: move;
@@ -28,6 +23,16 @@
     text-align: center;
     margin-top: 0px;
     margin-bottom: 0px;
+}
+
+.unit .panel-body {
+    padding: 3px 3px;
+    font-size:0.7em;
+}
+
+.unit .panel-heading {
+    padding: 3px 6px 3px 6px;
+    text-align: center;
 }
 
 .port {
