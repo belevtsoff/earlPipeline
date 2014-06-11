@@ -158,7 +158,7 @@ class GenericPipeline(object):
         """
         pass
 
-    @abstractproperty
+    @abstractmethod
     def run(self):
         """Executes the pipeline. Should return the status string,
         containing useful information for the user, or results"""
