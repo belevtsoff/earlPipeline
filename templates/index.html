@@ -27,49 +27,89 @@
   </head>
   <body>
   {% raw %}
+  
     <script type="text/x-handlebars">
-    <div id="header">
-        <h1>Pipeline Constructor</h1>
-    </div>
-    <div class="panel-left">
-        {{outlet units}}
-    </div>
-    <div class="panel-right" id="pipeline-container">
-        {{outlet pipeline}}
-    </div>
+        <div class="navbar navbar-default">
+            <div class="navbar-header"> <a class="navbar-brand" href="#">earlPipeline</a>
+
+            </div>
+            <ul class="nav navbar-nav">
+                <li><a href="#" class="">Dashboard</a>
+
+                </li>
+                <li class="active"><a href="#" class="">Pipeline Constructor</a>
+
+                </li>
+            </ul>
+        </div>
+
+        <div class="container-fluid">
+            <div class="row-fluid">
+                <div class="col-md-6">
+                   {{outlet units}}
+                   {{outlet pipelineControls}}
+                </div>
+                <div class="col-md-6">
+                    <div class="pull-right">
+                        <button class="btn btn-default">
+                            <span class="glyphicon glyphicon-save"></span> 
+                            Save
+                        </button>
+                        <button class="btn btn-danger" style="">
+                            <span class="glyphicon glyphicon-off"></span> 
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="row-fluid">
+                {{outlet pipeline}}
+            </div>
+        </div>
     </script>
 
     <script type="text/x-handlebars" data-template-name="metaUnits">
-        {{#each itemController="metaUnit"}}
-            <div>
-                {{id}}
-                <button {{action "addToPipeline"}}>+</button>
-            </div>
-        {{/each}}
+        <div class="btn-group">
+            <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
+                <span class="glyphicon glyphicon-plus"></span> Add Unit <span class="caret"></span>
+            </a>
+
+            <ul class="dropdown-menu">
+                {{#each itemController="metaUnit"}}
+                    <li><a style="cursor: pointer" {{action "addToPipeline"}}>{{id}}</a></li>
+                {{/each}}
+            </ul>
+        </div>
     </script>
 
     <script type="text/x-handlebars" data-template-name="pipeline">
-        <div id="container" oncontextmenu="return false;">
-            {{#each node in controller.nodes itemController="unit"}}
-                {{view App.Item}}
-            {{/each}}
-            {{loadConnections controller.edges.content}}
+        {{! The main panel, containig interactive units}}
+        <div class="col-md-9" id="pipeline-container">
+            <div class="info-panel units-box" oncontextmenu="return false;">
+                {{#each node in controller.nodes itemController="unit"}}
+                    {{view App.Item}}
+                {{/each}}
+                {{loadConnections controller.edges.content}}
+            </div>
         </div>
 
-        <div id="result-box">
-            {{view App.OutputView}}
+        {{! Results panel}}
+        <div class="col-md-3">
+            <div class="info-panel result-box" id="result-box">
+                {{view App.OutputView}}
+            </div>
         </div>
-
     </script>
 
     <script type="text/x-handlebars" data-template-name="pipeline-output">
-        <button {{action "run"}}>Execute</button>
         <h3>Output:</h3>
         {{#if isRunning}}
             <img src="static/css/ajax-loader.gif">
         {{else}}
             {{#if executionResult}}
                 <div style="white-space: pre-wrap;">{{executionResult}}</div>
+            {{else}}
+                No results yet. Hit "Execute" to run the pipeline
             {{/if}}
         {{/if}}
     </script>
@@ -80,11 +120,18 @@
         </div>
     </script>
 
-    <!--<script type="text/x-handlebars" data-template-name="pipelines">-->
-        <!--{{#each ppl in controller}}-->
-            <!--<div style="display: inline">{{#link-to 'pipeline' ppl}}{{ppl.name}}{{/link-to}}</div>-->
-        <!--{{/each}}-->
-    <!--</script>-->
+    <script type="text/x-handlebars" data-template-name="pipelineControls">
+        <button class="btn btn-primary" {{bind-attr disabled=isRunning}} {{action "run"}}>
+            {{#if isRunning}}
+                <span class="glyphicon glyphicon-time"></span> 
+            {{else}}
+                <span class="glyphicon glyphicon-flash"></span> 
+            {{/if}}
+            Execute
+        </button>
+        <font size="4" class="ppl-name">{{App.currentPipeline.id}}</font>
+    </script>
+
   {% endraw %}
   </body>
 </html>

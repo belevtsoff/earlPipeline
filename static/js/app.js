@@ -33,6 +33,12 @@ App.PipelineRoute = Em.Route.extend({
             controller: this.controllerFor('pipeline')
         });
 
+        this.render('pipelineControls', {
+            into: 'application',
+            outlet: 'pipelineControls',
+            controller: this.controllerFor('pipeline')
+        });
+
         this.render('metaUnits', {
             into: 'application',
             outlet: 'units',

@@ -2,77 +2,26 @@
 ._jsPlumb_endpoint { z-index:21; cursor:pointer; }
 ._jsPlumb_connector { z-index:4; }
 
-#container {
-    border: 1px solid gray;
-    border-radius:0.5em;
-    width: 70%;
-    height: 500px;
-    /*display: inline-block;*/
-    float:left;
+.info-panel {
+  border: thin solid LightGrey;
+  border-radius: 4px;
+  margin-top: 1em;
+  margin-bottom: 1em;
 }
 
-#header h1, #header ul {
-    display: inline-block;
-    width: auto;
-    zoom: 1;
+.units-box {
+    height: 100%;
 }
 
-.panel-left
-{        
-    width:10%;
-    float:left;            
-}
-
-.panel-right
-{        
-    width:90%;
-    float:left;
-}
-
-#result-box {
-    border:1px solid #346789;
-    border-radius:0.5em;
-    width: 25%;
-    /*font-family:helvetica;*/
+.result-box {
+    font-family:helvetica;
     padding:10px 10px;
     overflow: auto;
-    float:left;
-    margin: 1em;
-    margin-top: 0;
-    /*display: inline-block;*/
 }
 
-/* Adapted from
- * http://stackoverflow.com/questions/1964839/jquery-please-wait-loading-animation
- * */
-
-/* Start by setting display:none to make this hidden.
-   Then we position it in relation to the viewport window
-   with position:fixed. Width, height, top and left speak
-   speak for themselves. Background we set to 80% white with
-   our animation centered, and no-repeating */
-.ajax-loader {
-    /*display:    none;*/
-    /*position:   fixed;*/
-    /*z-index:    1000;*/
-    /*top:        0;*/
-    /*left:       0;*/
-    /*height:     100%;*/
-    /*width:      100%;*/
-    background: rgba( 255, 255, 255, .8 ) 
-                url(ajax-loader.gif) 
-                20px 20px 
-                no-repeat;
+.ppl-name {
+    margin-left: 1em;
+    padding-left: 1em;
+    border-left: thin solid;
+    color: Grey
 }
-
-/* When the body has the loading class, we turn
-   the scrollbar off with overflow:hidden */
-/*.result-box .loading {*/
-    /*overflow: hidden;   */
-/*}*/
-
-/* Anytime the body has the loading class, our
-   modal element will be visible */
-/*.result-box .loading .modal {*/
-    /*display: block;*/
-/*}*/
