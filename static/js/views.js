@@ -164,15 +164,19 @@ App.Item = Em.View.extend({
                 label: 'Ok',
                 action: function(dialog) {
                     var form = dialog.getMessage();
+                    var par_array = form.serializeArray();
 
-                    // grab values from all the fields in the form
-                    var parameters = {};
-                    $.each(form.serializeArray(), function(i, field) {
-                        parameters[field.name] = field.value;
-                    });
+                    // save parameters, if there are any available
+                    if (par_array.length > 0) {
+                        // grab values from all the fields in the form
+                        var parameters = {};
+                        $.each(par_array, function(i, field) {
+                            parameters[field.name] = field.value;
+                        });
 
-                    // send the data to the controller for persisting
-                    that.get('controller').send('saveSettings', parameters);
+                        // send the data to the controller for persisting
+                        that.get('controller').send('saveSettings', parameters);
+                    }
 
                     dialog.close();
                 }
@@ -184,7 +188,15 @@ App.Item = Em.View.extend({
             }],
 
             onshow: function(dialog) {
-                dialog.setMessage(that.createForm(that.get('controller.parameters')));
+                var parameters = that.get('controller.parameters');
+                if ($.isEmptyObject(parameters)) {
+                    var msg = $("<div />")
+                        .append("There are no available parameters for this unit")
+                    dialog.setMessage(msg);
+                }
+                else {
+                    dialog.setMessage(that.createForm(parameters));
+                }
             }
         });
 
