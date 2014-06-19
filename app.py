@@ -2,14 +2,91 @@ from flask import Flask, request, render_template, jsonify
 from flask_restful import Api, Resource, reqparse, fields, marshal, marshal_with, abort
 import backends.calculator as backend
 from functools import wraps
+import logging
 import time
 import json
+import multiprocessing as mp
+from multiprocessing import Queue
+from logutils.queue import QueueHandler
+import traceback
 
 app = Flask(__name__)
 app.debug=True
 api = Api(app)
 
-pipelines = [backend.Pipeline('Ppl1'), backend.Pipeline('Ppl2')]
+# TODO: make it store and read from disc
+# TODO: add docstrings here
+class PipelineManager(object):
+    def __init__(self, data_path = 'pipelines'):
+        self._pipelines = {}
+        self._running_processes = {}
+
+    def add_pipeline(self, ppl):
+        logger = logging.getLogger(ppl.name)
+        logger.setLevel(logging.INFO)
+        h = logging.StreamHandler()
+        f = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        h.setFormatter(f)
+        logger.addHandler(h)
+
+        self._pipelines[ppl.name] = ppl
+
+    def get_pipeline(self, name):
+        return self._pipelines[name]
+
+    def start_pipeline(self, name):
+        ppl = self.get_pipeline(name)
+
+        # a wrapper function which will remove the process from
+        # 'running_processes' and log the termination message when the pipeline
+        # has finished running
+        def run_wrapper():
+            try:
+                result = ppl.run()
+            except:
+                status = 'failed'
+                msg = traceback.format_exc()
+            else:
+                status = 'finished'
+                msg = result
+            finally:
+                # remove from running processes
+                del self._running_processes[ppl.name]
+
+                # inform the front-end
+                self.fire_status_change(name, status, msg)
+
+        p = mp.Process(target=run_wrapper)
+        self._running_processes[ppl.name] = p
+        self.fire_status_change(name, 'running', None)
+        p.start()
+
+    def stop_pipeline(self, name):
+        p = self._running_processes[name]
+        p.terminate()
+        del self._running_processes[name]
+        self.fire_status_change(name, 'failed', "Interrupted by user")
+
+    def fire_status_change(self, name, status, msg):
+        ppl = self.get_pipeline(name)
+
+        # use logging to send events to the front-end
+        logger = logging.getLogger(ppl.name)
+        logger.info("STATUS: %s" % status)
+        if msg:
+            if status == 'failed':
+                logger.error(msg)
+            else:
+                logger.info(msg)
+
+    def is_running(self, name):
+        if self._running_processes.has_key(name):
+            return True
+        return False
+
+pipelines = PipelineManager()
+pipelines.add_pipeline(backend.Pipeline('Ppl1'))
+pipelines.add_pipeline(backend.Pipeline('Ppl2'))
 
 def rootify(root):
     def wrap(f):
@@ -112,13 +189,13 @@ class Pipeline(Resource):
     @rootify('pipeline')
     @marshal_with(pipeline_fields)
     def get(self, **params):
-        return find_by_attr(pipelines, 'name', params['pid'])
+        return pipelines.get_pipeline(params['pid'])
 
     # Dummy method, so far
     @rootify('pipeline')
     @marshal_with(pipeline_fields)
     def put(self, **params):
-        return find_by_attr(pipelines, 'name', params['pid'])
+        return pipelines.get_pipeline(params['pid'])
 
 class MetaUnits(Resource):
     @rootify('metaUnits')
@@ -131,13 +208,13 @@ class Units(Resource):
     @rootify('units')
     @marshal_with(unit_fields)
     def get(self, **params):
-        ppl = find_by_attr(pipelines, 'name', params['pid'])
+        ppl = pipelines.get_pipeline(params['pid'])
         return ppl.units
 
     @rootify('unit')
     @marshal_with(unit_fields)
     def post(self, **params):
-        ppl = find_by_attr(pipelines, 'name', params['pid'])
+        ppl = pipelines.get_pipeline(params['pid'])
         req = request.get_json()['unit']
         cls = find_by_attr(backend.get_unit_types(), '__name__', req['type'])
         unit = cls()
@@ -152,7 +229,7 @@ class Unit(Resource):
     @rootify('unit')
     @marshal_with(unit_fields)
     def put(self, **params):
-        ppl = find_by_attr(pipelines, 'name', params['pid'])
+        ppl = pipelines.get_pipeline(params['pid'])
         unit = ppl.get_unit(params['id'])
         req = request.get_json()['unit']
         par_info = unit.parameters_info
@@ -167,7 +244,7 @@ class Unit(Resource):
         return unit
 
     def delete(self, **params):
-        ppl = find_by_attr(pipelines, 'name', params['pid'])
+        ppl = pipelines.get_pipeline(params['pid'])
         ppl.remove_unit(params['id'])
 
 
@@ -175,13 +252,13 @@ class Edges(Resource):
     @rootify('edges')
     @marshal_with(edge_fields)
     def get(self, **params):
-        ppl = find_by_attr(pipelines, 'name', params['pid'])
+        ppl = pipelines.get_pipeline(params['pid'])
         return ppl.edges
 
     @rootify('edge')
     @marshal_with(edge_fields)
     def post(self, **params):
-        ppl = find_by_attr(pipelines, 'name', params['pid'])
+        ppl = pipelines.get_pipeline(params['pid'])
         req = request.get_json()['edge']
         edge = ppl.connect(req['src'], req['srcPort'], req['dst'], req['dstPort'])
         return edge
@@ -189,17 +266,15 @@ class Edges(Resource):
 
 class Edge(Resource):
     def delete(self, **params):
-        ppl = find_by_attr(pipelines, 'name', params['pid'])
+        ppl = pipelines.get_pipeline(params['pid'])
         edge = find_by_attr(ppl.edges, 'id', params['id'])
         ppl.disconnect(edge.src, edge.srcPort, edge.dst, edge.dstPort)
 
 class Launcher(Resource):
     @rootify('result')
     def get(self, **params):
-        ppl = find_by_attr(pipelines, 'name', params['pid'])
-
-        time.sleep(1)
-        return str(ppl.run())
+        pipelines.start_pipeline(params['pid'])
+        return "OK"
 
 
 api.add_resource(Pipelines, '/api/pipelines')
