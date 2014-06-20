@@ -110,16 +110,6 @@ class Unit(GenericUnit):
     Unit implements most of the GenericUnit API, so that the user only has to
     implement the 'update' method of the unit
     """
-    def __init__(self):
-        self._pipeline = None
-        self._output = {}
-
-    def _get_pipeline(self):
-        if self._pipeline:
-            return self._pipeline
-        else:
-            raise RuntimeError("Unit %s is not in the pipeline" % self)
-
     # API implementation
 
     @property
@@ -136,7 +126,11 @@ class Unit(GenericUnit):
         return [name for name, t in cls.get_ports_dict().items()
                 if t == "OutPort"]
     
-    # Main implementation
+    def _get_pipeline(self):
+        if self._pipeline:
+            return self._pipeline
+        else:
+            raise RuntimeError("Unit %s is not in the pipeline" % self)
 
     # TODO: make sure pipeline is indeed Pipeline
     def _set_pipeline(self, pipeline):
@@ -150,6 +144,12 @@ class Unit(GenericUnit):
     pipeline = property(_get_pipeline, _set_pipeline,# _del_pipeline,
             "'Pipeline' instance containing this unit")
 
+    # Main implementation
+
+    def __init__(self):
+        self._pipeline = None
+        self._output = {}
+
     def get_name(self):
         """
         Obtains the unit's name, if it is contained in the Pipeline
@@ -161,7 +161,7 @@ class Unit(GenericUnit):
         return self.pipeline.get_unit_name(self)
 
     @abstractmethod
-    def update(self):
+    def run(self):
         """
         Implementation of the unit's inner workings. This method MUST be
         overloaded in the subclasses, otherwise the 'Unit' instance can't be
@@ -170,6 +170,20 @@ class Unit(GenericUnit):
         implementation should return nothing.
         """
         pass
+
+    def update(self):
+        """Wrapper of the user-defined 'run' method, doing all necessary
+        actions, e.g. setting running status for this unit"""
+        self.send_status('running')
+        try:
+            self.run()
+        except:
+            self.send_status('failed')
+            # Propagate the error. Traceback message will be sent by the
+            # pipeline
+            raise
+        else:
+            self.send_status('finished')
 
     def read_port(self, name):
         """
@@ -598,24 +612,22 @@ class Pipeline(Connections, GenericPipeline):
         super(Pipeline, self).__init__()
         self.name = name
 
-    def run(self):
-        """Calls 'update' methods on all terminal nodes. If available, also
-        returns the content of their 'result' ports
-        
-        Returns
-        -------
-        results: dict {src_name: object}
-            content of the 'result' ports of the terminal nodes"""
+    # required 'name' property
+    def _get_name(self):
+        return self._name
 
-        results = {}
+    def _set_name(self, val):
+        self._name = val
+
+    name = property(_get_name, _set_name)
+
+    def run(self):
+        """Calls 'update' methods on all terminal nodes. Terminal
+        nodes must take care of writing the results to disk, or
+        logging them"""
+
         _, term_nodes = self.get_init_term_nodes()
 
         for node_name in term_nodes:
             unit = self.get_unit(node_name)
             unit.update()
-            try:
-                results[node_name] = unit.read_port('result')
-            except:
-                pass
-
-        return results

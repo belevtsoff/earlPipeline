@@ -17,7 +17,7 @@ class Numbers(Unit):
     num2 = Parameter('num2', 'input', float, 5.9, datatype='number')
 
 
-    def update(self):
+    def run(self):
         self.zero = 0.0
         self.one = 1.0
         self.two = 2.0
@@ -32,7 +32,7 @@ class Div(Unit):
     num2 = InPort('num2')
     res = OutPort('res')
 
-    def update(self):
+    def run(self):
         self.res = self.num1 / self.num2
 
 class Add(Unit):
@@ -40,7 +40,7 @@ class Add(Unit):
     num2 = InPort('num2')
     res = OutPort('res')
 
-    def update(self):
+    def run(self):
         self.res = self.num1 + self.num2
 
 class Mul(Unit):
@@ -48,7 +48,7 @@ class Mul(Unit):
     num2 = InPort('num2')
     res = OutPort('res')
 
-    def update(self):
+    def run(self):
         self.res = self.num1 * self.num2
 
 class Pow(Unit):
@@ -56,17 +56,17 @@ class Pow(Unit):
     num2 = InPort('num2')
     res = OutPort('res')
 
-    def update(self):
+    def run(self):
         self.res = self.num1 ** self.num2
 
-class ToResult(Unit):
+class ToLog(Unit):
     inp = InPort('inp')
-    result = OutPort('result')
 
-    def update(self):
-        self.result = self.inp
+    def run(self):
+        self.logger.info("Result: %s" % self.inp)
+
 
 
 # method, returning types
 def get_unit_types():
-    return [Numbers, Add, Div, Mul, Pow, ToResult]
+    return [Numbers, Add, Div, Mul, Pow, ToLog]
