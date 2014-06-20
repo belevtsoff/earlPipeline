@@ -59,6 +59,14 @@ class Pow(Unit):
     def run(self):
         self.res = self.num1 ** self.num2
 
+class Failer(Unit):
+    inp = InPort('inp')
+    res = OutPort('res')
+
+    def run(self):
+        self.res = self.inp
+        raise RuntimeError("Filer failed, as expected...")
+
 class ToLog(Unit):
     inp = InPort('inp')
 
@@ -69,4 +77,4 @@ class ToLog(Unit):
 
 # method, returning types
 def get_unit_types():
-    return [Numbers, Add, Div, Mul, Pow, ToLog]
+    return [Numbers, Add, Div, Mul, Pow, Failer, ToLog]
