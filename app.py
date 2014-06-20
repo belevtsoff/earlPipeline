@@ -54,30 +54,19 @@ class PipelineManager(object):
                 del self._running_processes[ppl.name]
 
                 # inform the front-end
-                self.fire_status_change(name, status, msg)
+                ppl.send_status(status, msg)
 
         p = mp.Process(target=run_wrapper)
         self._running_processes[ppl.name] = p
-        self.fire_status_change(name, 'running', None)
+        ppl.send_status('running', None)
         p.start()
 
     def stop_pipeline(self, name):
-        p = self._running_processes[name]
-        p.terminate()
-        del self._running_processes[name]
-        self.fire_status_change(name, 'failed', "Interrupted by user")
-
-    def fire_status_change(self, name, status, msg):
         ppl = self.get_pipeline(name)
-
-        # use logging to send events to the front-end
-        logger = logging.getLogger(ppl.name)
-        logger.info("STATUS: %s" % status)
-        if msg:
-            if status == 'failed':
-                logger.error(msg)
-            else:
-                logger.info(msg)
+        p = self._running_processes[ppl.name]
+        p.terminate()
+        del self._running_processes[ppl.name]
+        ppl.send_status('failed', "Interrupted by user")
 
     def is_running(self, name):
         if self._running_processes.has_key(name):

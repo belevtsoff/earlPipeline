@@ -210,6 +210,44 @@ class GenericPipeline(object):
         containing useful information for the user, or results"""
         pass
 
+    # Partial implementation. These methods should not be normally overloaded.
+
+    @property
+    def logger(self):
+        """Logger instance for this pipeline.
+        
+        Returns
+        -------
+        logger : Logger
+            logger for this pipeline instance. Its name is of the form
+            pipeline_name"""
+
+        logger_name = "%s" % self.name
+        logger = logging.getLogger(logger_name)
+        return logger
+
+
+    def send_status(self, status, msg=None):
+        """Used to send execution status information to the front-end. If
+        supported by the back-end implementation, the front-end can update the
+        graphical appearance of the elements on the page according to their
+        execution status.
+        
+        Parameters
+        ----------
+        status : str
+            should be one of either of: 'running' (in progress), 'finished' (on
+            success), 'failed' (on error).
+        msg : str
+            associated msg to be logged after the status change"""
+
+        self.logger.info("STATUS: %s" % status)
+        if msg:
+            if status == 'failed':
+                self.logger.error(msg)
+            else:
+                self.logger.info(msg)
+
 
 # Edge object
 class Edge(object):
