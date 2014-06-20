@@ -42,13 +42,13 @@ class PipelineManager(object):
         # has finished running
         def run_wrapper():
             try:
-                result = ppl.run()
+                ppl.run()
             except:
                 status = 'failed'
                 msg = traceback.format_exc()
             else:
                 status = 'finished'
-                msg = result
+                msg = None
             finally:
                 # remove from running processes
                 del self._running_processes[ppl.name]

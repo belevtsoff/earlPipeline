@@ -8,6 +8,7 @@ equipping it with a simple engine
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 import inspect
+import logging
 
 class GenericUnit(object):
     """
@@ -15,9 +16,16 @@ class GenericUnit(object):
     """
     __metaclass__ = ABCMeta
 
+    # API specification
+
     @abstractproperty
     def name(self):
         """Name of this unit instance"""
+        pass
+
+    @abstractproperty
+    def pipeline(self):
+        """Instance of the pipeline, containing this unit"""
         pass
 
     @abstractmethod
@@ -48,7 +56,8 @@ class GenericUnit(object):
         descriptors."""
         pass
 
-    # Partial implementation. These methods must NOT be overloaded
+    # Partial implementation. These methods should not be normally overloaded.
+
     @property
     def parameters_info(self):
         parameters = {}
@@ -64,12 +73,49 @@ class GenericUnit(object):
             }
 
         return parameters
+
+    @property
+    def logger(self):
+        """Logger instance for this unit.
+        
+        Returns
+        -------
+        logger : Logger
+            logger for this unit instance. Its name is of the form
+            pipeline_name.unit_name"""
+
+        logger_name = "%s.%s" % (self.pipeline.name, self.name)
+        logger = logging.getLogger(logger_name)
+        return logger
+
+
+    def send_status(self, status):
+        """Used to send execution status information to the front-end. If
+        supported by the back-end implementation, the front-end can update the
+        graphical appearance of the units according to their execution status.
+        Use this method inside your units' implementation to inform the
+        front-end whether this unit is computing something or it has finished
+        or failed
+        
+        Parameters
+        ----------
+        status : str
+            should be one of either of: 'running' (in progress), 'finished' (on
+            success), 'failed' (on error)."""
+
+        msg = "STATUS: %s" % status
+        self.logger.info(msg)
             
 
 class GenericPipeline(object):
     """This is the base class for 'Pipeline'"""
 
     __metaclass__ = ABCMeta
+
+    @abstractproperty
+    def name(self):
+        """Name of this pipeline instance"""
+        pass
 
     @abstractproperty
     def units(self):
