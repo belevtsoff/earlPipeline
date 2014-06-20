@@ -154,10 +154,7 @@ App.PipelineController = Ember.ObjectController.extend({
         run: function() {
             this.set("isRunning", true);
 
-            // TODO: fix this evil code repetition
-            var url = this.store.adapterFor(this).namespace
-                + "/pipelines/" + App.currentPipeline.get("id")
-                + "/run"
+            var url = App.util.create_pipeline_url(App.currentPipeline.get("id"), 'run');
             var that = this;
             $.getJSON(url)
             .then(function(response) {

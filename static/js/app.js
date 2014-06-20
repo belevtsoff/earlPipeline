@@ -1,5 +1,6 @@
 window.App = Ember.Application.create({
-    currentPipeline: ''
+    currentPipeline: '',
+    namespace: 'api',
 });
 //App.ApplicationAdapter = DS.FixtureAdapter;
 
@@ -153,4 +154,18 @@ App.util = {
             throw "Wrong port identifier! Make sure your backend doesn't have special symbols in the port names";
         }
     },
+
+    /* Creates a url to the specified pipeline, based on the current adapter
+     * settings
+     *
+     * @param {string} pipeline_id Id of the pipeline
+     * @param {string} endpoint Endpoint for the current url
+     */
+    create_pipeline_url: function(pipeline_id, endpoint) {
+        // TODO: this is still ugly
+        var url = App.__container__.lookup('adapter:application')
+            .buildURL('pipeline', pipeline_id)
+        return url + '/' + endpoint
+    }
+
 }
