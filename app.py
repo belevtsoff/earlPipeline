@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, render_template, jsonify, Response
 from flask_restful import Api, Resource, reqparse, fields, marshal, marshal_with, abort
 import backends.calculator as backend
 from functools import wraps
@@ -9,10 +9,12 @@ import multiprocessing as mp
 from multiprocessing import Queue
 from logutils.queue import QueueHandler
 import traceback
+from sse import Sse
 
 app = Flask(__name__)
 app.debug=True
 api = Api(app)
+subscribers = []
 
 # TODO: make it store and read from disc
 # TODO: add docstrings here
@@ -22,12 +24,10 @@ class PipelineManager(object):
         self._running_processes = {}
 
     def add_pipeline(self, ppl):
-        logger = logging.getLogger(ppl.name)
-        logger.setLevel(logging.INFO)
         h = logging.StreamHandler()
         f = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         h.setFormatter(f)
-        logger.addHandler(h)
+        ppl.logger.addHandler(h)
 
         self._pipelines[ppl.name] = ppl
 
@@ -265,10 +265,33 @@ class Launcher(Resource):
         pipelines.start_pipeline(params['pid'])
         return "OK"
 
+class EventLogger(Resource):
+    def get(self, **params):
+        ppl = pipelines.get_pipeline(params['pid'])
+        q = Queue()
+        handler = QueueHandler(q)
+        ppl.logger.addHandler(handler)
+
+        def listener():
+            try:
+                while True:
+                    result = q.get()
+                    result = result.message
+                    ev = Sse()
+                    ev.add_message("log", result)
+                    yield str(ev)
+            except:
+                ppl.logger.removeHandler(handler)
+
+        return Response(listener(), mimetype="text/event-stream")
+        pass
+
+
 
 api.add_resource(Pipelines, '/api/pipelines')
 api.add_resource(Pipeline, '/api/pipelines/<string:pid>')
 api.add_resource(Launcher, '/api/pipelines/<string:pid>/run')
+api.add_resource(EventLogger, '/api/pipelines/<string:pid>/subscribe')
 
 api.add_resource(Units, '/api/pipelines/<string:pid>/units')
 api.add_resource(Unit, '/api/pipelines/<string:pid>/units/<string:id>')
@@ -284,5 +307,7 @@ def index():
 
 if __name__ == '__main__':
 	#app.run(host="0.0.0.0", port=80)
-        app.run()
+        logger = logging.getLogger()
+        logger.setLevel(logging.INFO)
+        app.run(threaded=True)
 

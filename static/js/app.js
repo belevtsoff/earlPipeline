@@ -71,6 +71,12 @@ App.PipelineRoute = Em.Route.extend({
         jsPlumb.bind("connectionMoved", function (info) {
             pplController.send('move', info);
         });
+
+        var event_src = new EventSource(App.util.create_pipeline_url(pplModel.get('id'), 'subscribe'));
+        event_src.addEventListener('log', function(e) {
+            console.log(e.data);
+        }, false);
+        this.controllerFor('pipeline').set('event_src', event_src)
     }
 });
 

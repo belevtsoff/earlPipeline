@@ -10,6 +10,8 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 import inspect
 import logging
 
+ROOT_LOG_NAME = "backend"
+
 class GenericUnit(object):
     """
     An abstract base class for unit, a main building block 
@@ -84,7 +86,7 @@ class GenericUnit(object):
             logger for this unit instance. Its name is of the form
             pipeline_name.unit_name"""
 
-        logger_name = "%s.%s" % (self.pipeline.name, self.name)
+        logger_name = "%s.%s.%s" % (ROOT_LOG_NAME, self.pipeline.name, self.name)
         logger = logging.getLogger(logger_name)
         return logger
 
@@ -222,7 +224,7 @@ class GenericPipeline(object):
             logger for this pipeline instance. Its name is of the form
             pipeline_name"""
 
-        logger_name = "%s" % self.name
+        logger_name = "%s.%s" % (ROOT_LOG_NAME, self.name)
         logger = logging.getLogger(logger_name)
         return logger
 
