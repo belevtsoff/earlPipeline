@@ -81,7 +81,9 @@ App.Item = Em.View.extend({
 
     // on middle mouse click, delete unit
     this.domElement.on('click', function (event) {
-        unit.send('remove');
+        // only on middle mouse action
+        if (event.which == 2)
+            unit.send('remove');
     });
     
     // subscribe to drop event for position storing
@@ -91,7 +93,7 @@ App.Item = Em.View.extend({
             unit.send('savePosition', $(this).position());
     });
 
-    // right click for deletion
+    // right click for settings
     this.domElement.on("contextmenu", function(event) {
         $("#" + dialog_id).modal("show");
     });
