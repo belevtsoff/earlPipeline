@@ -30,6 +30,7 @@ class Port(object):
         name of the port, to be used from the outside
     """
     def __init__(self, name):
+        super(Port, self).__init__()
         # TODO: check for name conflicts
         self.name = name
 
@@ -147,6 +148,7 @@ class Unit(GenericUnit):
     # Main implementation
 
     def __init__(self):
+        super(Unit, self).__init__()
         self._pipeline = None
         self._output = {}
 
@@ -279,6 +281,7 @@ class Connections(object):
     Connections implements the GenericPipeline API
     """
     def __init__(self):
+        super(Connections, self).__init__()
         self._connections = {}
         self._units = UnitMap()
         self.path_delimiter = '.'

@@ -59,6 +59,12 @@ class GenericUnit(object):
         pass
 
     # Partial implementation. These methods should not be normally overloaded.
+    # Don't forget to call super(cls, self).__init__() when overloading
+    # __init__ of this class
+
+    def __init__(self):
+        super(GenericUnit, self).__init__()
+        self._status = 'finished'
 
     @property
     def parameters_info(self):
@@ -68,10 +74,10 @@ class GenericUnit(object):
         for name, p in inspect.getmembers(cls, isparameter):
             parameters[p.name] = {
                 'name': p.name,
-                'parameter_type': p.parameter_type,
+                'type': p.parameter_type,
                 'value_type': p.value_type, # for internal usage
                 'value': getattr(self, p.name),
-                'parameter_args': p.parameter_args
+                'args': p.parameter_args
             }
 
         return parameters
@@ -105,8 +111,56 @@ class GenericUnit(object):
             should be one of either of: 'running' (in progress), 'finished' (on
             success), 'failed' (on error)."""
 
+        # set the status of self
+        self._status = status
+
+        # inform the front-end
         msg = "STATUS: %s" % status
         self.logger.info(msg)
+
+    def to_dict(self):
+        """Returns a dict, conforming to the 'unit' model definition on the
+        front-end (models.js)
+        
+        Returns
+        -------
+        res : dict
+            JSON-serializable version of this object"""
+
+        # copy
+        parameters = dict(self.parameters_info)
+        for name, par in parameters.items():
+            del par['value_type'] # not for frontend
+
+        res = {
+                'id': self.name,
+                'type': self.__class__.__name__,
+                'parameters': parameters,
+                'top': hasattr(self, 'top') and self.top or 100,
+                'left': hasattr(self, 'left') and self.left or 100,
+                'status': self._status
+                }
+
+        return res
+
+    @classmethod
+    def cls_to_dict(cls):
+        """Returns a dict, conforming to the 'metaUnit' model definition on the
+        front-end (models.js)
+        
+        Returns
+        -------
+        res : dict
+            JSON-serializable version of this class"""
+
+        res = {
+                'id': cls.__name__,
+                'inPorts': cls.get_in_ports(),
+                'outPorts': cls.get_out_ports()
+                }
+
+        return res
+
             
 
 class GenericPipeline(object):
@@ -213,6 +267,12 @@ class GenericPipeline(object):
         pass
 
     # Partial implementation. These methods should not be normally overloaded.
+    # Don't forget to call super(cls, self).__init__() when overloading
+    # __init__ of this class
+
+    def __init__(self):
+        super(GenericPipeline, self).__init__()
+        self._status = 'finished'
 
     @property
     def logger(self):
@@ -243,6 +303,10 @@ class GenericPipeline(object):
         msg : str
             associated msg to be logged after the status change"""
 
+        # set self._stauts
+        self._status = status
+
+        # inform the front-end about status change
         self.logger.info("STATUS: %s" % status)
         if msg:
             if status == 'failed':
@@ -250,11 +314,30 @@ class GenericPipeline(object):
             else:
                 self.logger.info(msg)
 
+    def to_dict(self):
+        """Returns a dict, conforming to the 'pipeline' model definition on the
+        front-end (models.js)
+        
+        Returns
+        -------
+        res : dict
+            JSON-serializable version of this object"""
+
+        res = {
+                'id': self.name,
+                'nodes': [unit.name for unit in self.units],
+                'edges': [edge.id for edge in self.edges],
+                'status': self._status
+                }
+
+        return res
+
 
 # Edge object
 class Edge(object):
     """A helper class to encapsulate port naming convention on the front-end"""
     def __init__(self, src, srcPort, dst, dstPort):
+        super(Edge, self).__init__()
         self.src = src
         self.srcPort = srcPort
         self.dst = dst
@@ -264,6 +347,25 @@ class Edge(object):
         return self.src+"."+self.srcPort+"->"+self.dst+"."+self.dstPort
 
     id = property(_get_id)
+
+    def to_dict(self):
+        """Returns a dict, conforming to the 'edge' model definition on the
+        front-end (models.js)
+        
+        Returns
+        -------
+        res : dict
+            JSON-serializable version of this object"""
+
+        res = {
+                'id': self.id,
+                'src': self.src,
+                'srcPort': self.srcPort,
+                'dst': self.dst,
+                'dstPort': self.dstPort
+                }
+
+        return res
 
 
 # Parameter descriptor
@@ -294,6 +396,7 @@ class Parameter(object):
             do they require.
         """
 
+        super(Parameter, self).__init__()
         self.name = name
         self.parameter_type = parameter_type
         self.value_type = value_type

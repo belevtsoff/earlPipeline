@@ -1,33 +1,31 @@
 <html>
   <head>
     <!--dependencies-->
-    <script type="text/javascript" src="{{url_for('static', filename='js/libs/jquery-1.10.2.js')}}"></script>
-    <script type="text/javascript" src="{{url_for('static', filename='js/libs/jquery-ui-1.10.4.js')}}"></script>
-    <script type="text/javascript" src="{{url_for('static', filename='js/libs/jquery.jsPlumb-1.5.5.js')}}"></script>
-    <script type="text/javascript" src="{{url_for('static', filename='js/libs/handlebars.js')}}"></script>
-    <script type="text/javascript" src="{{url_for('static', filename='js/libs/ember.js')}}"></script>
-    <script type="text/javascript" src="{{url_for('static', filename='js/libs/ember-data.js')}}"></script>
-    <script type="text/javascript" src="{{url_for('static', filename='js/libs/bootstrap.js')}}"></script>
-    <script type="text/javascript" src="{{url_for('static', filename='js/libs/bootstrap-dialog.js')}}"></script>
+    <script type="text/javascript" src="{{static_url('js/libs/jquery-1.10.2.js')}}"></script>
+    <script type="text/javascript" src="{{static_url('js/libs/jquery-ui-1.10.4.js')}}"></script>
+    <script type="text/javascript" src="{{static_url('js/libs/jquery.jsPlumb-1.5.5.js')}}"></script>
+    <script type="text/javascript" src="{{static_url('js/libs/handlebars.js')}}"></script>
+    <script type="text/javascript" src="{{static_url('js/libs/ember.js')}}"></script>
+    <script type="text/javascript" src="{{static_url('js/libs/ember-data.js')}}"></script>
+    <script type="text/javascript" src="{{static_url('js/libs/bootstrap.js')}}"></script>
+    <script type="text/javascript" src="{{static_url('js/libs/bootstrap-dialog.js')}}"></script>
 
     <!-- application code-->
-    <script type="text/javascript" src="{{url_for('static', filename='js/app.js')}}"></script>
-    <script type="text/javascript" src="{{url_for('static', filename='js/models.js')}}"></script>
-    <script type="text/javascript" src="{{url_for('static', filename='js/views.js')}}"></script>
-    <script type="text/javascript" src="{{url_for('static', filename='js/controllers.js')}}"></script>
-    <script type="text/javascript" src="{{url_for('static', filename='js/adapters.js')}}"></script>
-    <script type="text/javascript" src="{{url_for('static', filename='js/draw_styles.js')}}"></script>
+    <script type="text/javascript" src="{{static_url('js/app.js')}}"></script>
+    <script type="text/javascript" src="{{static_url('js/models.js')}}"></script>
+    <script type="text/javascript" src="{{static_url('js/views.js')}}"></script>
+    <script type="text/javascript" src="{{static_url('js/controllers.js')}}"></script>
+    <script type="text/javascript" src="{{static_url('js/adapters.js')}}"></script>
+    <script type="text/javascript" src="{{static_url('js/draw_styles.js')}}"></script>
 
     <!--CSS-->
-    <link rel="stylesheet" href="{{url_for('static', filename='css/main.css')}}">
-    <link rel="stylesheet" href="{{url_for('static', filename='css/unit.css')}}">
-    <link rel="stylesheet" href="{{url_for('static', filename='css/bootstrap.css')}}">
-    <link rel="stylesheet" href="{{url_for('static', filename='css/bootstrap-theme.css')}}">
-    <link rel="stylesheet" href="{{url_for('static', filename='css/bootstrap-dialog.css')}}">
+    <link rel="stylesheet" href="{{static_url('css/main.css')}}">
+    <link rel="stylesheet" href="{{static_url('css/unit.css')}}">
+    <link rel="stylesheet" href="{{static_url('css/bootstrap.css')}}">
+    <link rel="stylesheet" href="{{static_url('css/bootstrap-theme.css')}}">
+    <link rel="stylesheet" href="{{static_url('css/bootstrap-dialog.css')}}">
   </head>
   <body>
-  {% raw %}
-  
     <script type="text/x-handlebars">
         <div class="navbar navbar-default">
             <div class="navbar-header"> <a class="navbar-brand" href="#">earlPipeline</a>
@@ -46,8 +44,8 @@
         <div class="container-fluid">
             <div class="row-fluid">
                 <div class="col-md-6">
-                   {{outlet units}}
-                   {{outlet pipelineControls}}
+                   {{!outlet units}}
+                   {{!outlet pipelineControls}}
                 </div>
                 <div class="col-md-6">
                     <div class="pull-right">
@@ -63,7 +61,7 @@
                 </div>
             </div>
             <div class="row-fluid">
-                {{outlet pipeline}}
+                {{!outlet pipeline}}
             </div>
         </div>
     </script>
@@ -75,63 +73,61 @@
             </a>
 
             <ul class="dropdown-menu">
-                {{#each itemController="metaUnit"}}
-                    <li><a style="cursor: pointer" {{action "addToPipeline"}}>{{id}}</a></li>
-                {{/each}}
+                {{!#each itemController="metaUnit"}}
+                    <li><a style="cursor: pointer" {{!action "addToPipeline"}}>{{!id}}</a></li>
+                {{!/each}}
             </ul>
         </div>
     </script>
 
     <script type="text/x-handlebars" data-template-name="pipeline">
-        {{! The main panel, containig interactive units}}
+        {{!! The main panel, containig interactive units}}
         <div class="col-md-9" id="pipeline-container">
             <div class="info-panel units-box" oncontextmenu="return false;">
-                {{#each node in controller.nodes itemController="unit"}}
-                    {{view App.Item}}
-                {{/each}}
-                {{loadConnections controller.edges.content}}
+                {{!#each node in controller.nodes itemController="unit"}}
+                    {{!view App.Item}}
+                {{!/each}}
+                {{!loadConnections controller.edges.content}}
             </div>
         </div>
 
-        {{! Results panel}}
+        {{!! Results panel}}
         <div class="col-md-3">
             <div class="info-panel result-box" id="result-box">
-                {{view App.OutputView}}
+                {{!view App.OutputView}}
             </div>
         </div>
     </script>
 
     <script type="text/x-handlebars" data-template-name="pipeline-output">
         <h3>Output:</h3>
-        {{#if isRunning}}
+        {{!#if isRunning}}
             <img src="static/css/ajax-loader.gif">
-        {{else}}
-            {{#if executionResult}}
-                <div style="white-space: pre-wrap;">{{executionResult}}</div>
-            {{else}}
+        {{!else}}
+            {{!#if executionResult}}
+                <div style="white-space: pre-wrap;">{{!executionResult}}</div>
+            {{!else}}
                 No results yet. Hit "Execute" to run the pipeline
-            {{/if}}
-        {{/if}}
+            {{!/if}}
+        {{!/if}}
     </script>
 
     <script type="text/x-handlebars" data-template-name="single-unit">
         <div class='panel-heading'>
-            {{view.controller.id}}
+            {{!view.controller.id}}
         </div>
     </script>
 
     <script type="text/x-handlebars" data-template-name="pipelineControls">
-        <button class="btn btn-primary" {{bind-attr disabled=isRunning}} {{action "run"}}>
-            {{#if isRunning}}
+        <button class="btn btn-primary" {{!bind-attr disabled=isRunning}} {{!action "run"}}>
+            {{!#if isRunning}}
                 <span class="glyphicon glyphicon-time"></span> 
-            {{else}}
+            {{!else}}
                 <span class="glyphicon glyphicon-flash"></span> 
-            {{/if}}
+            {{!/if}}
             Execute
         </button>
-        <font size="4" class="ppl-name">{{App.currentPipeline.id}}</font>
+        <font size="4" class="ppl-name">{{!App.currentPipeline.id}}</font>
     </script>
-
-  {% endraw %}
   </body>
 </html>

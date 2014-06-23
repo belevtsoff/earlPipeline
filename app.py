@@ -1,23 +1,28 @@
-from flask import Flask, request, render_template, jsonify, Response
-from flask_restful import Api, Resource, reqparse, fields, marshal, marshal_with, abort
 import backends.calculator as backend
-from functools import wraps
 import logging
-import time
-import json
 import multiprocessing as mp
 from multiprocessing import Queue
 from logutils.queue import QueueHandler
 import traceback
-from sse import Sse
+import os
+import time
 
-app = Flask(__name__)
-app.debug=True
-api = Api(app)
-subscribers = []
+import tornado.escape
+import tornado.ioloop
+import tornado.web
+
+from tornado.options import define, options, parse_command_line
+
+define("port", default=5000, help="run on the given port", type=int)
+define("debug", default=True)
+
+class IndexHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.render("index.html")
 
 # TODO: make it store and read from disc
 # TODO: add docstrings here
+# TODO: put it in a separate file
 class PipelineManager(object):
     def __init__(self, data_path = 'pipelines'):
         self._pipelines = {}
@@ -75,16 +80,12 @@ class PipelineManager(object):
 
 pipelines = PipelineManager()
 pipelines.add_pipeline(backend.Pipeline('Ppl1'))
+num = backend.Numbers()
+lg = backend.ToLog()
+pipelines.get_pipeline("Ppl1").add_unit(num, "numnum")
+pipelines.get_pipeline("Ppl1").add_unit(lg, "lglg")
+pipelines.get_pipeline("Ppl1").connect("numnum", "two", "lglg", "inp")
 pipelines.add_pipeline(backend.Pipeline('Ppl2'))
-
-def rootify(root):
-    def wrap(f):
-        @wraps(f)
-        def wrapped_f(*args, **kwargs):
-            data = {root: f(*args, **kwargs)}
-            return jsonify(data)
-        return wrapped_f
-    return wrap
 
 def find_by_attr(seq, attr, value):
     try:
@@ -92,135 +93,59 @@ def find_by_attr(seq, attr, value):
     except:
         raise KeyError('%s not found' % value)
 
-# Herlper structures for automatic object for backend-server API conversion.
+## Server RESTfull API
 
-class UnitNameField(fields.Raw):
-    """Helper class which extracts name field from unit instance
-    """
-    def format(self, value):
-        return marshal(value, {'name': fields.String})['name']
+class PipelineHandler(tornado.web.RequestHandler):
+    def get(self, pid):
+        ppl = pipelines.get_pipeline(pid)
+        self.write({'pipeline': ppl.to_dict()})
 
-class EdgeIdField(fields.Raw):
-    """Helper class which extracts id field from Edge instance
-    """
-    def format(self, value):
-        return marshal(value, {'id': fields.String})['id']
-
-class MetaUnitPorts(fields.Raw):
-    """A hack to marshal over class methods. 'get_unit_types' returns classes,
-    and they don't have properties. This field reads calls specified class
-    method and converts its return value to list of strings"""
-    def format(self, value):
-        ports = value()
-
-        # uugh
-        return marshal({'p': ports}, {'p': fields.List(fields.String)})['p']
-
-class UnitParameters(fields.Raw):
-    def format(self, parameters):
-        result = {}
-
-        parameter_fields = {
-            'name': fields.String,
-            'type': fields.String(attribute='parameter_type'),
-        }
-
-        for par_name, item in parameters.items():
-
-            parameter = marshal(item, parameter_fields)
-            # TODO: maybe this is too insecure
-            parameter['value'] = item['value']
-            parameter['args'] = item['parameter_args']
-
-            result[par_name] = parameter
-
-        return result
-
-metaUnit_fields = {
-    'id': fields.String(attribute='__name__'),
-    'inPorts': MetaUnitPorts(attribute='get_in_ports'),
-    'outPorts': MetaUnitPorts(attribute='get_out_ports')
-}
-
-unit_fields = {
-    'id': fields.String(attribute='name'),
-    'type': fields.String(attribute='__class__.__name__'),
-    # TODO: figure out where is the bug. For now, just convert the thing to a
-    # string
-    'parameters': UnitParameters(attribute='parameters_info'),
-    'top': fields.Integer(default=150),
-    'left': fields.Integer(default=150)
-}
-
-edge_fields = {
-    'id': fields.String,
-    'src': fields.String,
-    'srcPort': fields.String,
-    'dst': fields.String,
-    'dstPort': fields.String,
-}
-
-pipeline_fields = {
-    'id': fields.String(attribute='name'),
-    'nodes': fields.List(UnitNameField, attribute='units'),
-    'edges': fields.List(EdgeIdField)
-}
-
-# Server RESTfull API
-
-class Pipelines(Resource):
+class MetaUnitsHandler(tornado.web.RequestHandler):
     def get(self):
-        pass
-    def post(self):
-        pass
-
-class Pipeline(Resource):
-    @rootify('pipeline')
-    @marshal_with(pipeline_fields)
-    def get(self, **params):
-        return pipelines.get_pipeline(params['pid'])
-
-    # Dummy method, so far
-    @rootify('pipeline')
-    @marshal_with(pipeline_fields)
-    def put(self, **params):
-        return pipelines.get_pipeline(params['pid'])
-
-class MetaUnits(Resource):
-    @rootify('metaUnits')
-    @marshal_with(metaUnit_fields)
-    def get(self):
-        return backend.get_unit_types()
+        munits = [munit.cls_to_dict() for munit in backend.get_unit_types()]
+        self.write({'metaUnits': munits})
 
 
-class Units(Resource):
-    @rootify('units')
-    @marshal_with(unit_fields)
-    def get(self, **params):
-        ppl = pipelines.get_pipeline(params['pid'])
-        return ppl.units
+class UnitsHandler(tornado.web.RequestHandler):
+    def get(self, pid):
+        ppl = pipelines.get_pipeline(pid)
+        units = [unit.to_dict() for unit in ppl.units]
+        self.write({'units': units})
 
-    @rootify('unit')
-    @marshal_with(unit_fields)
-    def post(self, **params):
-        ppl = pipelines.get_pipeline(params['pid'])
-        req = request.get_json()['unit']
+    def post(self, pid):
+        ppl = pipelines.get_pipeline(pid)
+        req = tornado.escape.json_decode(self.request.body)['unit']
+
+        def create_name(ppl, unit_type, counter):
+            """Create unit name as lower cased typename plus some number. If
+            the name exists in the pipeline, the counter is recursively
+            incremented"""
+            name = unit_type.lower() + str(counter)
+            try:
+                find_by_attr(ppl.units, 'name', name)
+            except: # no such name
+                pass
+            else: # if name exists, increment counter
+                name = create_name(ppl, unit_type, counter+1)
+            finally:
+                return name
+
         cls = find_by_attr(backend.get_unit_types(), '__name__', req['type'])
         unit = cls()
-        ppl.add_unit(unit, req['type'].lower()+str(len(ppl.units)))
-        
-        return unit
 
-class Unit(Resource):
+        name = create_name(ppl, req['type'], len(ppl.units))
+        ppl.add_unit(unit, name)
+        
+        self.write({'unit': unit.to_dict()})
+
+class UnitHandler(tornado.web.RequestHandler):
     def get(self):
         pass
 
-    @rootify('unit')
-    @marshal_with(unit_fields)
-    def put(self, **params):
-        ppl = pipelines.get_pipeline(params['pid'])
-        unit = ppl.get_unit(params['id'])
-        req = request.get_json()['unit']
+    def put(self, pid, uid):
+        ppl = pipelines.get_pipeline(pid)
+        unit = ppl.get_unit(uid)
+        req = tornado.escape.json_decode(self.request.body)['unit']
         par_info = unit.parameters_info
 
         unit.top = req['top']
@@ -230,84 +155,52 @@ class Unit(Resource):
             type_func = par_info[par_name]['value_type']
             unit.set_parameter(par_name, type_func(parameter['value']))
 
-        return unit
+        self.write({'unit': unit.to_dict()})
 
-    def delete(self, **params):
-        ppl = pipelines.get_pipeline(params['pid'])
-        ppl.remove_unit(params['id'])
+    def delete(self, pid, uid):
+        ppl = pipelines.get_pipeline(pid)
+        ppl.remove_unit(uid)
+        self.write({})
 
 
-class Edges(Resource):
-    @rootify('edges')
-    @marshal_with(edge_fields)
-    def get(self, **params):
-        ppl = pipelines.get_pipeline(params['pid'])
-        return ppl.edges
+class EdgesHandler(tornado.web.RequestHandler):
+    def get(self, pid):
+        ppl = pipelines.get_pipeline(pid)
+        edges = [edge.to_dict() for edge in ppl.edges]
+        self.write({'edges': edges})
 
-    @rootify('edge')
-    @marshal_with(edge_fields)
-    def post(self, **params):
-        ppl = pipelines.get_pipeline(params['pid'])
-        req = request.get_json()['edge']
+    def post(self, pid):
+        ppl = pipelines.get_pipeline(pid)
+        req = tornado.escape.json_decode(self.request.body)['edge']
+
         edge = ppl.connect(req['src'], req['srcPort'], req['dst'], req['dstPort'])
-        return edge
+        self.write({'edge': edge.to_dict()})
         
 
-class Edge(Resource):
-    def delete(self, **params):
-        ppl = pipelines.get_pipeline(params['pid'])
-        edge = find_by_attr(ppl.edges, 'id', params['id'])
+class EdgeHandler(tornado.web.RequestHandler):
+    def delete(self, pid, eid):
+        ppl = pipelines.get_pipeline(pid)
+        edge = find_by_attr(ppl.edges, 'id', eid)
         ppl.disconnect(edge.src, edge.srcPort, edge.dst, edge.dstPort)
+        self.write({})
 
-class Launcher(Resource):
-    @rootify('result')
-    def get(self, **params):
-        pipelines.start_pipeline(params['pid'])
-        return "OK"
+handlers = [
+    (r'/', IndexHandler),
+    (r'/api/pipelines/([^/]*)', PipelineHandler),
+    (r'/api/pipelines/([^/]*)/units', UnitsHandler),
+    (r'/api/pipelines/([^/]*)/edges', EdgesHandler),
+    (r'/api/pipelines/([^/]*)/units/([^/]*)', UnitHandler),
+    (r'/api/pipelines/([^/]*)/edges/([^/]*)', EdgeHandler),
+    (r'/api/metaUnits', MetaUnitsHandler),
+]
 
-class EventLogger(Resource):
-    def get(self, **params):
-        ppl = pipelines.get_pipeline(params['pid'])
-        q = Queue()
-        handler = QueueHandler(q)
-        ppl.logger.addHandler(handler)
-
-        def listener():
-            try:
-                while True:
-                    result = q.get()
-                    result = result.message
-                    ev = Sse()
-                    ev.add_message("log", result)
-                    yield str(ev)
-            except:
-                ppl.logger.removeHandler(handler)
-
-        return Response(listener(), mimetype="text/event-stream")
-        pass
-
-
-
-api.add_resource(Pipelines, '/api/pipelines')
-api.add_resource(Pipeline, '/api/pipelines/<string:pid>')
-api.add_resource(Launcher, '/api/pipelines/<string:pid>/run')
-api.add_resource(EventLogger, '/api/pipelines/<string:pid>/subscribe')
-
-api.add_resource(Units, '/api/pipelines/<string:pid>/units')
-api.add_resource(Unit, '/api/pipelines/<string:pid>/units/<string:id>')
-
-api.add_resource(Edges, '/api/pipelines/<string:pid>/edges')
-api.add_resource(Edge, '/api/pipelines/<string:pid>/edges/<string:id>')
-
-api.add_resource(MetaUnits, '/api/metaUnits')
-
-@app.route('/')
-def index():
-	return render_template('index.html')
+app = tornado.web.Application(handlers,
+        debug=options.debug,
+        template_path=os.path.join(os.path.dirname(__file__), "templates"),
+        static_path=os.path.join(os.path.dirname(__file__), "static")
+        )
 
 if __name__ == '__main__':
-	#app.run(host="0.0.0.0", port=80)
-        logger = logging.getLogger()
-        logger.setLevel(logging.INFO)
-        app.run(threaded=True)
-
+    parse_command_line()
+    app.listen(options.port)
+    tornado.ioloop.IOLoop.instance().start()
