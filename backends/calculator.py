@@ -2,6 +2,7 @@
 # simple_graph_engine API
 
 from base_simple_engine import Pipeline, Unit, InPort, OutPort, Parameter
+import time
 
 class Numbers(Unit):
     zero = OutPort('zero')
@@ -71,6 +72,7 @@ class ToLog(Unit):
     inp = InPort('inp')
 
     def run(self):
+        time.sleep(10)
         self.logger.info("Result: %s" % self.inp)
 
 

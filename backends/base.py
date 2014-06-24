@@ -9,10 +9,11 @@ equipping it with a simple engine
 from abc import ABCMeta, abstractmethod, abstractproperty
 import inspect
 import logging
+import tools
 
 ROOT_LOG_NAME = "backend"
 
-class GenericUnit(object):
+class GenericUnit(tools.Runnable):
     """
     An abstract base class for unit, a main building block 
     """
@@ -62,10 +63,6 @@ class GenericUnit(object):
     # Don't forget to call super(cls, self).__init__() when overloading
     # __init__ of this class
 
-    def __init__(self):
-        super(GenericUnit, self).__init__()
-        self._status = 'finished'
-
     @property
     def parameters_info(self):
         parameters = {}
@@ -111,11 +108,8 @@ class GenericUnit(object):
             should be one of either of: 'running' (in progress), 'finished' (on
             success), 'failed' (on error)."""
 
-        # set the status of self
-        self._status = status
-
-        # inform the front-end
-        msg = "STATUS: %s" % status
+        # inform the front-end and server
+        msg = tools.Status.create_msg(status)
         self.logger.info(msg)
 
     def to_dict(self):
@@ -138,7 +132,7 @@ class GenericUnit(object):
                 'parameters': parameters,
                 'top': hasattr(self, 'top') and self.top or 100,
                 'left': hasattr(self, 'left') and self.left or 100,
-                'status': self._status
+                'status': self.status
                 }
 
         return res
@@ -163,7 +157,7 @@ class GenericUnit(object):
 
             
 
-class GenericPipeline(object):
+class GenericPipeline(tools.Runnable):
     """This is the base class for 'Pipeline'"""
 
     __metaclass__ = ABCMeta
@@ -270,10 +264,6 @@ class GenericPipeline(object):
     # Don't forget to call super(cls, self).__init__() when overloading
     # __init__ of this class
 
-    def __init__(self):
-        super(GenericPipeline, self).__init__()
-        self._status = 'finished'
-
     @property
     def logger(self):
         """Logger instance for this pipeline.
@@ -303,11 +293,8 @@ class GenericPipeline(object):
         msg : str
             associated msg to be logged after the status change"""
 
-        # set self._stauts
-        self._status = status
-
         # inform the front-end about status change
-        self.logger.info("STATUS: %s" % status)
+        self.logger.info(tools.Status.create_msg(status))
         if msg:
             if status == 'failed':
                 self.logger.error(msg)
@@ -327,7 +314,7 @@ class GenericPipeline(object):
                 'id': self.name,
                 'nodes': [unit.name for unit in self.units],
                 'edges': [edge.id for edge in self.edges],
-                'status': self._status
+                'status': self.status
                 }
 
         return res

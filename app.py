@@ -1,15 +1,15 @@
 import backends.calculator as backend
-import logging
-import multiprocessing as mp
-from multiprocessing import Queue
-from logutils.queue import QueueHandler
-import traceback
 import os
 import time
 
 import tornado.escape
 import tornado.ioloop
 import tornado.web
+import tornado.websocket
+import tornado.gen
+import tornado.concurrent
+
+from tools import PipelineManager, WebSocketLogHandler
 
 from tornado.options import define, options, parse_command_line
 
@@ -20,63 +20,6 @@ class IndexHandler(tornado.web.RequestHandler):
     def get(self):
         self.render("index.html")
 
-# TODO: make it store and read from disc
-# TODO: add docstrings here
-# TODO: put it in a separate file
-class PipelineManager(object):
-    def __init__(self, data_path = 'pipelines'):
-        self._pipelines = {}
-        self._running_processes = {}
-
-    def add_pipeline(self, ppl):
-        h = logging.StreamHandler()
-        f = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        h.setFormatter(f)
-        ppl.logger.addHandler(h)
-
-        self._pipelines[ppl.name] = ppl
-
-    def get_pipeline(self, name):
-        return self._pipelines[name]
-
-    def start_pipeline(self, name):
-        ppl = self.get_pipeline(name)
-
-        # a wrapper function which will remove the process from
-        # 'running_processes' and log the termination message when the pipeline
-        # has finished running
-        def run_wrapper():
-            try:
-                ppl.run()
-            except:
-                status = 'failed'
-                msg = traceback.format_exc()
-            else:
-                status = 'finished'
-                msg = None
-            finally:
-                # remove from running processes
-                del self._running_processes[ppl.name]
-
-                # inform the front-end
-                ppl.send_status(status, msg)
-
-        p = mp.Process(target=run_wrapper)
-        self._running_processes[ppl.name] = p
-        ppl.send_status('running', None)
-        p.start()
-
-    def stop_pipeline(self, name):
-        ppl = self.get_pipeline(name)
-        p = self._running_processes[ppl.name]
-        p.terminate()
-        del self._running_processes[ppl.name]
-        ppl.send_status('failed', "Interrupted by user")
-
-    def is_running(self, name):
-        if self._running_processes.has_key(name):
-            return True
-        return False
 
 pipelines = PipelineManager()
 pipelines.add_pipeline(backend.Pipeline('Ppl1'))
@@ -184,6 +127,34 @@ class EdgeHandler(tornado.web.RequestHandler):
         ppl.disconnect(edge.src, edge.srcPort, edge.dst, edge.dstPort)
         self.write({})
 
+class PipelineEventHandler(tornado.websocket.WebSocketHandler):
+    def open(self, pid):
+        # add to clients
+        self.id = self.get_argument("connId")
+        self.ppl = pipelines.get_pipeline(pid)
+        clients[self.id] = self
+
+        self.stream.set_nodelay(True)
+
+        self.log_handler = WebSocketLogHandler(self)
+        self.ppl.logger.addHandler(self.log_handler)
+
+        print "Stream to %s established" % pid
+
+    def on_message(self, message):
+        if message == "RUN":
+            print "running %s" % self.ppl.name
+            pipelines.start_pipeline(self.ppl.name)
+        else:
+            print message
+
+    def on_close(self):
+        if self.id in clients.keys():
+            print "Stream to %s closed" % self.ppl.name
+            self.ppl.logger.removeHandler(self.log_handler)
+            del clients[self.id]
+
+
 handlers = [
     (r'/', IndexHandler),
     (r'/api/pipelines/([^/]*)', PipelineHandler),
@@ -192,6 +163,7 @@ handlers = [
     (r'/api/pipelines/([^/]*)/units/([^/]*)', UnitHandler),
     (r'/api/pipelines/([^/]*)/edges/([^/]*)', EdgeHandler),
     (r'/api/metaUnits', MetaUnitsHandler),
+    (r'/api/pipelines/([^/]*)/event_bus', PipelineEventHandler)
 ]
 
 app = tornado.web.Application(handlers,
@@ -199,6 +171,8 @@ app = tornado.web.Application(handlers,
         template_path=os.path.join(os.path.dirname(__file__), "templates"),
         static_path=os.path.join(os.path.dirname(__file__), "static")
         )
+
+clients = {}
 
 if __name__ == '__main__':
     parse_command_line()

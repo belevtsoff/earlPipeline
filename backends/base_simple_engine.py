@@ -12,6 +12,7 @@ from base import GenericUnit, GenericPipeline, Edge, Parameter
 from abc import ABCMeta, abstractmethod
 from bidict import namedbidict
 import inspect
+import tools
 
 UnitMap = namedbidict('UnitMap', 'by_name', 'by_instance')
 
@@ -176,16 +177,16 @@ class Unit(GenericUnit):
     def update(self):
         """Wrapper of the user-defined 'run' method, doing all necessary
         actions, e.g. setting running status for this unit"""
-        self.send_status('running')
+        self.send_status(tools.Status.RUNNING)
         try:
             self.run()
         except:
-            self.send_status('failed')
+            self.send_status(tools.Status.FAILED)
             # Propagate the error. Traceback message will be sent by the
             # pipeline
             raise
         else:
-            self.send_status('finished')
+            self.send_status(tools.Status.FINISHED)
 
     def read_port(self, name):
         """
