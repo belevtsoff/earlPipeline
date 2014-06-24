@@ -222,10 +222,11 @@ App.PipelineController = Ember.ObjectController.extend(App.Runnable, {
             if(event.type == 'status') {
                 if (event.content.target_type == 'pipeline') {
                     // update the pipeline's status
-                    this.store.update('pipeline', {
-                        id: this.get('id'), // this ppl
-                        status: event.content.status,
-                    });
+                    //this.store.update('pipeline', {
+                        //id: this.get('id'), // this ppl
+                        //status: event.content.status,
+                    //});
+                    this.set('status', event.content.status);
                     console.log(event.content);
                 }
                 else if (event.content.target_type == 'unit') {

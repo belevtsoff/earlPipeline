@@ -2,7 +2,16 @@ App.Item = Em.View.extend({
   /* ember view setup */
   tagName: 'div',
   classNames: ['unit', 'panel', 'panel-success'],
-
+  classNameBindings: ['statusClass'],
+  statusClass: 'panel-success',
+  statusChanged: function() {
+      if(this.get('controller.status') == App.util.status_codes.RUNNING)
+          this.set('statusClass', 'panel-warning');
+      else if (this.get('controller.status') == App.util.status_codes.FAILED)
+          this.set('statusClass', 'panel-danger');
+      else
+          this.set('statusClass', 'panel-success');
+  }.observes('controller.status').on('didInsertElement'),
 
   didInsertElement: function () {
     // jQuery handle on this element
