@@ -72,8 +72,9 @@ class ToLog(Unit):
     inp = InPort('inp')
 
     def run(self):
-        time.sleep(10)
-        self.logger.info("Result: %s" % self.inp)
+        while True:
+            time.sleep(10)
+            self.logger.info("Result: %s" % self.inp)
 
 
 

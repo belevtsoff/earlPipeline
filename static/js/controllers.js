@@ -234,6 +234,7 @@ App.PipelineController = Ember.ObjectController.extend(App.Runnable, {
                         id: event.content.target,
                         status: event.content.status,
                     });
+                    console.log(event.content);
                 }
             }
             else if(event.type == 'log') {

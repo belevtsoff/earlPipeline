@@ -9,7 +9,7 @@ import tornado.websocket
 import tornado.gen
 import tornado.concurrent
 
-from tools import PipelineManager, WebSocketLogHandler
+from tools import PipelineManager, WebSocketLogHandler, LogEventServer
 
 from tornado.options import define, options, parse_command_line
 
@@ -21,7 +21,9 @@ class IndexHandler(tornado.web.RequestHandler):
         self.render("index.html")
 
 
-pipelines = PipelineManager()
+event_server = LogEventServer()
+pipelines = PipelineManager(event_server)
+
 pipelines.add_pipeline(backend.Pipeline('Ppl1'))
 num = backend.Numbers()
 lg = backend.ToLog()
@@ -29,6 +31,8 @@ pipelines.get_pipeline("Ppl1").add_unit(num, "numnum")
 pipelines.get_pipeline("Ppl1").add_unit(lg, "lglg")
 pipelines.get_pipeline("Ppl1").connect("numnum", "two", "lglg", "inp")
 pipelines.add_pipeline(backend.Pipeline('Ppl2'))
+
+#import pdb; pdb.set_trace()
 
 def find_by_attr(seq, attr, value):
     try:
@@ -132,12 +136,11 @@ class PipelineEventHandler(tornado.websocket.WebSocketHandler):
         # add to clients
         self.id = self.get_argument("connId")
         self.ppl = pipelines.get_pipeline(pid)
-        clients[self.id] = self
 
         self.stream.set_nodelay(True)
 
         self.log_handler = WebSocketLogHandler(self)
-        self.ppl.logger.addHandler(self.log_handler)
+        pipelines.event_server.add_client(self)
 
         print "Stream to %s established" % pid
 
@@ -145,14 +148,15 @@ class PipelineEventHandler(tornado.websocket.WebSocketHandler):
         if message == "RUN":
             print "running %s" % self.ppl.name
             pipelines.start_pipeline(self.ppl.name)
+        elif message == "STOP":
+            print "stopping %s" % self.ppl.name
+            pipelines.stop_pipeline(self.ppl.name)
         else:
             print message
 
     def on_close(self):
-        if self.id in clients.keys():
-            print "Stream to %s closed" % self.ppl.name
-            self.ppl.logger.removeHandler(self.log_handler)
-            del clients[self.id]
+        print "Stream to %s closed" % self.ppl.name
+        pipelines.event_server.remove_client(self)
 
 
 handlers = [
