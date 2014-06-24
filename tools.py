@@ -55,13 +55,6 @@ class PipelineManager(object):
 
         self.event_server = event_server
         self.event_server.start()
-        
-        #class Listener:
-            #def __init__(self):
-                #self.id = 12345
-                #self.log_handler = logging.StreamHandler()
-
-        #self.event_server.add_client(Listener())
 
     def add_pipeline(self, ppl):
         self._pipelines[ppl.name] = ppl
@@ -71,7 +64,14 @@ class PipelineManager(object):
 
     def start_pipeline(self, name):
         ppl = self.get_pipeline(name)
-        self.event_server.add_pipeline(ppl)
+
+        # if hasn't been started before
+        if not name in self._running_processes.keys():
+            self.event_server.add_pipeline(ppl)
+        else:
+            p = self._running_processes[name]
+            if p.is_alive():
+                raise Exception("Can't start. The pipeline %s is still running" % name)
 
         # a wrapper function which logs the termination message when the
         # pipeline has finished running
@@ -98,8 +98,8 @@ class PipelineManager(object):
         p = self._running_processes[name]
         p.terminate()
         del self._running_processes[ppl.name]
-        self.event_server.remove_pipeline(ppl)
         ppl.send_status(Status.FAILED, "Interrupted by user")
+        self.event_server.remove_pipeline(ppl)
 
 
 def if_running(f):
@@ -183,7 +183,6 @@ class WebSocketLogHandler(logging.Handler):
         # status regexp
 
     def emit(self, record):
-        print "shooting event at %s" % self.stream.id
         # check source
         unit = None
         pipeline = None
