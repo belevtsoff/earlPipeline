@@ -239,7 +239,7 @@ App.PipelineController = Ember.ObjectController.extend(App.Runnable, {
             }
             else if(event.type == 'log') {
                 msg = App.util.event_to_html(event);
-                this.executionResult += msg + "\n";
+                this.set("executionResult", this.get("executionResult")+msg+"\n");
                 console.log(msg);
             }
             

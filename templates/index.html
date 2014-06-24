@@ -54,8 +54,8 @@
                             Save
                         </button>
                         <button class="btn btn-danger" style="">
-                            <span class="glyphicon glyphicon-off"></span> 
-                            Close
+                            <span class="glyphicon glyphicon-remove"></span> 
+                            Delete
                         </button>
                     </div>
                 </div>
@@ -100,16 +100,19 @@
     </script>
 
     <script type="text/x-handlebars" data-template-name="pipeline-output">
-        <h3>Output:</h3>
-        {{!#if isRunning}}
-            <img src="static/css/ajax-loader.gif">
-        {{!else}}
-            {{!#if executionResult}}
-                <div style="white-space: pre-wrap;">{{!executionResult}}</div>
+        <h3>Status: 
+            {{!#if isRunning}}
+                <font color="green">running</font>
             {{!else}}
-                No results yet. Hit "Execute" to run the pipeline
+                {{!#if hasFailed}}
+                    <font color="red">failed</font>
+                {{!else}}
+                    <font color="grey">stopped</font>
+                {{!/if}}
             {{!/if}}
-        {{!/if}}
+        </h3>
+        <hr>
+        <div style="white-space: pre-wrap;">{{!executionResult}}</div>
     </script>
 
     <script type="text/x-handlebars" data-template-name="single-unit">
@@ -119,14 +122,17 @@
     </script>
 
     <script type="text/x-handlebars" data-template-name="pipelineControls">
-        <button class="btn btn-primary" {{!bind-attr disabled=isRunning}} {{!action "run"}}>
-            {{!#if isRunning}}
-                <span class="glyphicon glyphicon-time"></span> 
-            {{!else}}
-                <span class="glyphicon glyphicon-flash"></span> 
-            {{!/if}}
-            Execute
-        </button>
+        {{!#if isRunning}}
+            <button class="btn btn-warning" {{!action "stop"}}>
+                <span class="glyphicon glyphicon-stop"></span> 
+                Stop
+            </button>
+        {{!else}}
+            <button class="btn btn-primary" {{!action "run"}}>
+                <span class="glyphicon glyphicon-play"></span> 
+                Run
+            </button>
+        {{!/if}}
         <font size="4" class="ppl-name">{{!App.currentPipeline.id}}</font>
     </script>
   </body>
