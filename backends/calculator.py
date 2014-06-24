@@ -57,8 +57,9 @@ class Delay(Unit):
     delay_sec = Parameter('delay_sec', 'dropdown', int, 3, items=[1, 2, 3, 4, 5])
 
     def run(self):
-        time.sleep(self.delay_sec)
         self.out = self.inp
+        self.logger.info("waiting %s seconds" % self.delay_sec)
+        time.sleep(self.delay_sec)
 
 class ToLog(Unit):
     inp = InPort('inp')
