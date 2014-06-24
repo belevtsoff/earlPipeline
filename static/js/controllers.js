@@ -3,6 +3,27 @@
     //sortAscending: true
 //});
 
+App.Runnable = Ember.Mixin.create({
+    isRunning: null,
+    hasFailed: null,
+
+    statusChanged: function() {
+        // using 'if' instead of 'switch' for type conversion
+        if (this.get('status') == App.util.status_codes.FINISHED) {
+            this.set('isRunning', false);
+            this.set('hasFailed', false);
+        }
+        else if (this.get('status') == App.util.status_codes.RUNNING) {
+            this.set('isRunning', true);
+            this.set('hasFailed', false);
+        }
+        else if (this.get('status') == App.util.status_codes.FAILED) {
+            this.set('isRunning', false);
+            this.set('hasFailed', true);
+        }
+    }.observes('status'),
+});
+
 App.MetaUnitsController = Ember.ArrayController.extend();
 
 App.MetaUnitController = Ember.ObjectController.extend({
@@ -28,8 +49,9 @@ App.MetaUnitController = Ember.ObjectController.extend({
     },
 });
 
-App.UnitController = Ember.ObjectController.extend({
+App.UnitController = Ember.ObjectController.extend(App.Runnable, {
     needs: ['pipeline'],
+
     actions:{
         savePosition: function(position) {
             this.set('model.top', position.top);
@@ -82,10 +104,9 @@ App.UnitController = Ember.ObjectController.extend({
     }
 });
 
-App.PipelineController = Ember.ObjectController.extend({
+App.PipelineController = Ember.ObjectController.extend(App.Runnable, {
     //needs: ['pipelines'],
-    executionResult: null,
-    isRunning: false,
+    executionResult: "",
 
     actions: {
         /* triggered when two units are manually connected */
@@ -152,28 +173,76 @@ App.PipelineController = Ember.ObjectController.extend({
         
         /* Execute the current pipeline and get the data */
         run: function() {
-            this.set("isRunning", true);
+            this.get("event_bus").send("RUN");
+        },
 
-            var url = App.util.create_pipeline_url(App.currentPipeline.get("id"), 'run');
-            var that = this;
-            $.getJSON(url)
-            .then(function(response) {
-                that.set("executionResult", response.result);
-                that.set("isRunning", false);
-            }, function (error) {
-                alert("An error occurred: " + error.responseText);
-                that.set("isRunning", false);
-            });
-            //var sleep = function(millis, callback) {
-                //setTimeout(function()
-                    //{ callback(); } , millis);
-            //};
-            //var that = this;
-            //sleep(1000, function () {
-                //that.set("executionResult", "This output is generated on client for testing purposes!!");
-                //that.set("isRunning", false);
-            //});
-        }
+        /* Stop this pipeline, if running */
+        stop: function() {
+            this.get("event_bus").send("STOP");
+        },
+
+        /* Handles a server event, sent via the websocket. The message is
+         * supposed to be a JSON-parsable string, of the object of the
+         * following forms:
+         * 
+         * For log msg:
+         * {
+         *     type: 'log',
+         *     content: {
+         *         time: log time,
+         *         src: {
+         *             pipeline: pipeline name,
+         *             unit: source unit, or null, if sent from pipeline,
+         *         },
+         *         msg: message of this event,
+         *     }
+         * }
+         *
+         * For status update:
+         * {
+         *     type: 'status',
+         *     content: {
+         *         time: log time,
+         *         status: new status,
+         *         target_type: 'unit' or 'pipeline',
+         *         target: name of the target object,
+         *     }
+         * }
+         *
+         * The message of each event will be parsed. If the message is of the
+         * form "STATUS: status", it will be interpreted as a signal to change
+         * running status of a corresponding unit or a pipeline. Other messages
+         * will be treated as log messages and will be passed to the results
+         * stream */
+        handle_server_event: function(data) {
+            var event = $.parseJSON(data);
+            //var status = App.util.get_status(event.msg)
+
+            // check if this event is status update
+            if(event.type == 'status') {
+                if (event.content.target_type == 'pipeline') {
+                    // update the pipeline's status
+                    this.store.update('pipeline', {
+                        id: this.get('id'), // this ppl
+                        status: event.content.status,
+                    });
+                    console.log(event.content);
+                }
+                else if (event.content.target_type == 'unit') {
+                    // update the unit's status
+                    this.store.update('unit', {
+                        id: event.content.target,
+                        status: event.content.status,
+                    });
+                }
+            }
+            else if(event.type == 'log') {
+                msg = App.util.event_to_html(event);
+                this.executionResult += msg + "\n";
+                console.log(msg);
+            }
+            
+        },
     },
 
     updateEdge: function(edge, cntInfo) {

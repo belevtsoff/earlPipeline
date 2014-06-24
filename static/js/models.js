@@ -2,7 +2,8 @@
 
 App.Pipeline = DS.Model.extend({
     nodes: DS.hasMany('unit', {async: true}),
-    edges: DS.hasMany('edge', {async: true})
+    edges: DS.hasMany('edge', {async: true}),
+    status: DS.attr('string'),
 });
 
 App.Edge = DS.Model.extend({
@@ -28,6 +29,7 @@ App.Unit = DS.Model.extend({
     type: DS.belongsTo('metaUnit'),
     top: DS.attr('number'),
     left: DS.attr('number'),
+    status: DS.attr('string'),
     //pipeline: DS.belongsTo('pipeline'),
     
     // Unit settings. This field is expected to be a JSON data of the form:

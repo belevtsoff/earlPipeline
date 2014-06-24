@@ -72,11 +72,22 @@ App.PipelineRoute = Em.Route.extend({
             pplController.send('move', info);
         });
 
-        var event_src = new EventSource(App.util.create_pipeline_url(pplModel.get('id'), 'subscribe'));
-        event_src.addEventListener('log', function(e) {
-            console.log(e.data);
-        }, false);
-        this.controllerFor('pipeline').set('event_src', event_src)
+        // initialize a WebSocket connection for event passing
+        // TODO: close this connection before route switch
+        var url = App.util.create_pipeline_url(pplModel.get('id'), 'event_bus');
+        var conn_id = Date.now();
+        url = App.util.create_ws_origin() + url + "?connId=" + conn_id;
+
+        var ws = new WebSocket(url);
+        ws.onopen = function() {
+            pplController.set("event_bus", ws);
+        };
+        ws.onmessage = function (evt) {
+            pplController.send("handle_server_event", evt.data);
+        };
+        ws.onclose = function() {
+            alert('Event-stream connection to server is dropped for some reason! Try reloading the page.');
+        }
     }
 });
 
@@ -86,6 +97,13 @@ App.util = {
     // many underscores to avoid conflicts
     id_template: "uname___%@___pname___%@___%@",
     id_regexp: "uname___(.*)___pname___(.*)___(?:prt|endp)",
+
+    // Status stuff
+    status_codes: {
+        FINISHED: 1,
+        RUNNING: 2,
+        FAILED: 3,
+    },
 
     /* Given an 'edge' data object, looks up the corresponding graphical
     * elements and creates a graphical link between the respective ports of the
@@ -161,6 +179,28 @@ App.util = {
         }
     },
 
+    /* Given log msg object, constructs a decorated html string to be inserted in the page
+     *
+     * @param {Object} msg Object to convert
+     */
+    event_to_html: function(msg) {
+        // TODO: add some actual decoration
+        var res = msg.content.msg;
+        if(msg.content.src.pipeline) {
+            if(msg.content.src.unit) {
+                res = msg.content.src.pipeline+"."+msg.content.src.unit+": "+res;
+            }
+            else {
+                res = msg.content.src.pipeline+": "+res;
+            }
+        }
+        else {
+            res = "server: "+res;
+        }
+
+        return res;
+    },
+
     /* Creates a url to the specified pipeline, based on the current adapter
      * settings
      *
@@ -172,6 +212,10 @@ App.util = {
         var url = App.__container__.lookup('adapter:application')
             .buildURL('pipeline', pipeline_id)
         return url + '/' + endpoint
-    }
+    },
 
+    /* Constructs origin for a WebSocket URL */
+    create_ws_origin: function() {
+        return window.location.origin.replace('http', 'ws');
+    }
 }

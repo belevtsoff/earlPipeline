@@ -17,7 +17,6 @@ App.Item = Em.View.extend({
     //}
 
     this.initElement();
-    console.log(this.get('controller').get('id'));
   },
 
   // cleanup
