@@ -4,29 +4,12 @@
 from base_simple_engine import Pipeline, Unit, InPort, OutPort, Parameter
 import time
 
-class Numbers(Unit):
-    zero = OutPort('zero')
-    one = OutPort('one')
-    two = OutPort('two')
-    three = OutPort('three')
-    four = OutPort('four')
-    five = OutPort('five')
-    int_port = OutPort('int_port')
-    flt_port = OutPort('flt_port')
-
-    num1 = Parameter('num1', 'dropdown', int, 12, items=[1, 5, 8, 12, 14])
-    num2 = Parameter('num2', 'input', float, 5.9, datatype='number')
-
+class Number(Unit):
+    out = OutPort('out')
+    value = Parameter('value', 'input', float, 5.9, datatype='number')
 
     def run(self):
-        self.zero = 0.0
-        self.one = 1.0
-        self.two = 2.0
-        self.three = 3.0
-        self.four = 4.0
-        self.five = 5.0
-        self.int_port = self.num1
-        self.flt_port = self.num2
+        self.out = self.value
 
 class Div(Unit):
     num1 = InPort('num1')
@@ -68,16 +51,23 @@ class Failer(Unit):
         self.res = self.inp
         raise RuntimeError("Filer failed, as expected...")
 
+class Delay(Unit):
+    inp = InPort('inp')
+    out = OutPort('out')
+    delay_sec = Parameter('delay_sec', 'dropdown', int, 3, items=[1, 2, 3, 4, 5])
+
+    def run(self):
+        time.sleep(self.delay_sec)
+        self.out = self.inp
+
 class ToLog(Unit):
     inp = InPort('inp')
 
     def run(self):
-        while True:
-            time.sleep(10)
-            self.logger.info("Result: %s" % self.inp)
+        self.logger.info("Result: %s" % self.inp)
 
 
 
 # method, returning types
 def get_unit_types():
-    return [Numbers, Add, Div, Mul, Pow, Failer, ToLog]
+    return [Number, Add, Div, Mul, Pow, Failer, Delay, ToLog]
