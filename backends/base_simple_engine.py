@@ -177,16 +177,16 @@ class Unit(GenericUnit):
     def update(self):
         """Wrapper of the user-defined 'run' method, doing all necessary
         actions, e.g. setting running status for this unit"""
-        self.send_status(tools.Status.RUNNING)
+        self.status = tools.Status.RUNNING
         try:
             self.run()
         except:
-            self.send_status(tools.Status.FAILED)
+            self.status = tools.Status.FAILED
             # Propagate the error. Traceback message will be sent by the
             # pipeline
             raise
         else:
-            self.send_status(tools.Status.FINISHED)
+            self.status = tools.Status.FINISHED
 
     def read_port(self, name):
         """

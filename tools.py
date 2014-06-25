@@ -26,6 +26,17 @@ class Status(object):
             return m.groups()[0]
         return m
 
+    @staticmethod
+    def assert_valid(status):
+        """checks if this is a valid status. If not, raises a ValueError"""
+        istatus = int(status)
+        try:
+            assert istatus == Status.FINISHED\
+                or istatus == Status.RUNNING\
+                or istatus == Status.FAILED
+        except:
+            raise ValueError("Invalid status: %s" % status)
+
 
 class Runnable(object):
     """Adds a 'status' interface to an object, which is writable from other
@@ -39,10 +50,18 @@ class Runnable(object):
     def _get_status(self):
         return self._status.value
 
-    def _set_status(self, value):
-        self._status.value = int(value)
+    def _set_status(self, status):
+        Status.assert_valid(status)
+        self._status.value = int(status)
+        self._on_status_changed()
 
     status = property(_get_status, _set_status)
+
+    def _on_status_changed(self):
+
+        """Optional handler for status change. Overload this if you want to do
+        something when status property is changed"""
+        pass
 
 # TODO: make it store and read from disc
 # TODO: add docstrings here
@@ -77,28 +96,36 @@ class PipelineManager(object):
         # pipeline has finished running
         def run_wrapper():
             try:
+                ppl.logger.info("Staring...")
                 ppl.run()
             except:
                 status = Status.FAILED
                 msg = traceback.format_exc()
             else:
                 status = Status.FINISHED
+                ppl.logger.info("...done")
                 msg = None
             finally:
                 # inform the server
-                ppl.send_status(status, msg)
+                ppl.status = status
+                if msg:
+                    ppl.logger.error(msg)
 
         p = mp.Process(target=run_wrapper)
-        ppl.send_status(Status.RUNNING, None)
+        ppl.status = Status.RUNNING
         p.start()
         self._running_processes[ppl.name] = p
 
     def stop_pipeline(self, name):
         ppl = self.get_pipeline(name)
+
         p = self._running_processes[name]
         p.terminate()
         del self._running_processes[ppl.name]
-        ppl.send_status(Status.FAILED, "Interrupted by user")
+
+        ppl.status = Status.FAILED
+        ppl.logger.error("Interrupted by user")
+
         self.event_server.remove_pipeline(ppl)
 
 
@@ -176,11 +203,17 @@ class LogEventServer(object):
 
 
 class WebSocketLogHandler(logging.Handler):
+    """Packs the received event to a JSON-serializable data format and sends it
+    to a client over a given websocket connection """
     def __init__(self, stream):
+        """
+        Parameters
+        ----------
+        stream : tornado.websocket.WebSocketHandler
+            a websocket connection to send events over
+        """
         super(WebSocketLogHandler, self).__init__()
         self.stream = stream
-
-        # status regexp
 
     def emit(self, record):
         # check source
@@ -204,12 +237,10 @@ class WebSocketLogHandler(logging.Handler):
             if unit:
                 target_type = 'unit'
                 target = unit
-                ppl.get_unit(unit).status = status
 
             else:
                 target_type = 'pipeline'
                 target = pipeline
-                ppl.status = status
             
             res = {
                     'type': 'status',

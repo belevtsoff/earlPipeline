@@ -94,22 +94,18 @@ class GenericUnit(tools.Runnable):
         return logger
 
 
-    def send_status(self, status):
+    def _on_status_changed(self):
         """Used to send execution status information to the front-end. If
         supported by the back-end implementation, the front-end can update the
         graphical appearance of the units according to their execution status.
-        Use this method inside your units' implementation to inform the
-        front-end whether this unit is computing something or it has finished
-        or failed
         
-        Parameters
-        ----------
-        status : str
-            should be one of either of: 'running' (in progress), 'finished' (on
-            success), 'failed' (on error)."""
-
-        # inform the front-end and server
-        msg = tools.Status.create_msg(status)
+        Because 'GenericUnit' inherits from Runnable, you don't need to call
+        this method explicitly, as it will be invoked automatically when setting
+        the 'status' property.
+        """
+        
+        # inform the front-end
+        msg = tools.Status.create_msg(self.status)
         self.logger.info(msg)
 
     def to_dict(self):
@@ -279,27 +275,19 @@ class GenericPipeline(tools.Runnable):
         return logger
 
 
-    def send_status(self, status, msg=None):
+    def _on_status_changed(self):
         """Used to send execution status information to the front-end. If
         supported by the back-end implementation, the front-end can update the
         graphical appearance of the elements on the page according to their
         execution status.
-        
-        Parameters
-        ----------
-        status : str
-            should be one of either of: 'running' (in progress), 'finished' (on
-            success), 'failed' (on error).
-        msg : str
-            associated msg to be logged after the status change"""
+
+        Because 'GenericPipeline' inherits from Runnable, you don't need to call
+        this method explicitly, as it will be invoked automatically when setting
+        the 'status' property.
+        """
 
         # inform the front-end about status change
-        self.logger.info(tools.Status.create_msg(status))
-        if msg:
-            if status == 'failed':
-                self.logger.error(msg)
-            else:
-                self.logger.info(msg)
+        self.logger.info(tools.Status.create_msg(self.status))
 
     def to_dict(self):
         """Returns a dict, conforming to the 'pipeline' model definition on the
