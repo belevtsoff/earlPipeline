@@ -142,7 +142,7 @@ class PipelineEventHandler(tornado.websocket.WebSocketHandler):
         self.log_handler = WebSocketLogHandler(self)
         pipelines.event_server.add_client(self)
 
-        print "Stream to %s established" % pid
+        print "Client %s has connected to %s" % (self.id, pid)
 
     def on_message(self, message):
         if message == "RUN":
@@ -155,7 +155,7 @@ class PipelineEventHandler(tornado.websocket.WebSocketHandler):
             print message
 
     def on_close(self):
-        print "Stream to %s closed" % self.ppl.name
+        print "Client %s has disconnected from %s" % (self.id, self.ppl.name)
         pipelines.event_server.remove_client(self)
 
 
