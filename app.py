@@ -42,6 +42,11 @@ def find_by_attr(seq, attr, value):
 
 ## Server RESTfull API
 
+class PipelinesHandler(tornado.web.RequestHandler):
+    def get(self):
+        pplmodels = [ppl.to_dict() for ppl in pipelines]
+        self.write({'pipelines':pplmodels})
+
 class PipelineHandler(tornado.web.RequestHandler):
     def get(self, pid):
         ppl = pipelines.get_pipeline(pid)
@@ -161,6 +166,7 @@ class PipelineEventHandler(tornado.websocket.WebSocketHandler):
 
 handlers = [
     (r'/', IndexHandler),
+    (r'/api/pipelines', PipelinesHandler),
     (r'/api/pipelines/([^/]*)', PipelineHandler),
     (r'/api/pipelines/([^/]*)/units', UnitsHandler),
     (r'/api/pipelines/([^/]*)/edges', EdgesHandler),

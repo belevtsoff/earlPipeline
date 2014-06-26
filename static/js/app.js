@@ -24,6 +24,12 @@ App.IndexRoute = Ember.Route.extend({
     beforeModel: function() {
         this.transitionTo('pipelines');
     }
+});
+
+App.PipelinesRoute = Ember.Route.extend({
+    model: function() {
+        return this.store.find('pipeline');
+    }
 })
 
 App.PipelineRoute = Em.Route.extend({

@@ -148,6 +148,10 @@ class PipelineManager(object):
         self.event_server = event_server
         self.event_server.start()
 
+    def __iter__(self):
+        for ppl in self._pipelines.values():
+            yield ppl
+
     def add_pipeline(self, ppl):
         self._pipelines[ppl.name] = ppl
 

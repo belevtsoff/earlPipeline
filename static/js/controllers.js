@@ -104,6 +104,7 @@ App.UnitController = Ember.ObjectController.extend(App.Runnable, {
     }
 });
 
+
 App.PipelineController = Ember.ObjectController.extend(App.Runnable, {
     //needs: ['pipelines'],
     executionResult: "",
@@ -290,4 +291,14 @@ Ember.Handlebars.helper("loadConnections", function (edges) {
             App.util.plumbConnect(edge);
         }
     }
+});
+
+// handlebars helper for converting status code into a readable string
+Ember.Handlebars.helper("statusToString", function(status_code) {
+    if (status_code == App.util.status_codes.FINISHED)
+        return "Finished"
+    else if (status_code == App.util.status_codes.RUNNING)
+        return "Running"
+    else if (status_code == App.util.status_codes.FINISHED)
+        return "Failed"
 });

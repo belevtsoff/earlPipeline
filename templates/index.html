@@ -28,15 +28,17 @@
   <body>
     <script type="text/x-handlebars">
         <div class="navbar navbar-default">
-            <div class="navbar-header"> <a class="navbar-brand" href="#">earlPipeline</a>
-
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">earlPipeline</a>
             </div>
-            <ul class="nav navbar-nav">
-                <li><a href="#/pipelines" class="">Dashboard</a>
 
-                </li>
-                <li class="active">{{!#link-to 'pipeline' App.currentPipeline}}Pipeline Constructor{{!/link-to}}
-                </li>
+            <ul class="nav navbar-nav">
+                {{!#link-to "pipelines" tagName="li"}}
+                    <a style="cursor:pointer" {{!bind-attr href="view.href"}}>Dashboard</a>
+                {{!/link-to}}
+                {{!#link-to "pipeline" "Ppl1" tagName="li"}}
+                    <a style="cursor:pointer" {{!bind-attr href="view.href"}}>Pipeline Constructor</a>
+                {{!/link-to}}
             </ul>
         </div>
 
@@ -44,7 +46,35 @@
     </script>
 
     <script type="text/x-handlebars" data-template-name="pipelines">
-        DASHBOARD
+        <div class="container">
+            <h1>Pipelines</h1>
+            <hr />
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Backend</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{!#each}}
+                        <tr {{!bind-attr class="isRunning:info hasFailed:danger"}}>
+                            <td>{{!id}}</td>
+                            <td><font color="grey">Unknown</font></td>
+                            <td>{{!statusToString status}}</td>
+                            <td>
+                                <p class="text-center">
+                                    {{!link-to 'Open' 'pipeline' id class="btn btn-primary"}}
+                                </p>
+                            </td>
+                        </tr>
+                    {{!/each}}
+                </tbody>
+            </table>
+        </div>
+
         {{!outlet}}
     </script>
 
