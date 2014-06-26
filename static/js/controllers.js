@@ -216,35 +216,42 @@ App.PipelineController = Ember.ObjectController.extend(App.Runnable, {
          * stream */
         handle_server_event: function(data) {
             var event = $.parseJSON(data);
-            //var status = App.util.get_status(event.msg)
-
-            // check if this event is status update
-            if(event.type == 'status') {
-                if (event.content.target_type == 'pipeline') {
-                    // update the pipeline's status
-                    //this.store.update('pipeline', {
-                        //id: this.get('id'), // this ppl
-                        //status: event.content.status,
-                    //});
-                    this.set('status', event.content.status);
-                    console.log(event.content);
-                }
-                else if (event.content.target_type == 'unit') {
-                    // update the unit's status
-                    this.store.update('unit', {
-                        id: event.content.target,
-                        status: event.content.status,
-                    });
-                    console.log(event.content);
-                }
-            }
-            else if(event.type == 'log') {
-                msg = App.util.event_to_html(event);
-                this.set("executionResult", this.get("executionResult")+msg+"\n");
-                console.log(msg);
-            }
             
+            // handle the event
+            switch(event.type) {
+                case 'status':
+                    this.handle_status_event(event.data);
+                    break;
+                case 'log':
+                    this.handle_log_event(event.data);
+                    break;
+                default:
+                    console.log("Unknown event type " + event.type + " caught:")
+                    console.log(event.data)
+            }
         },
+    },
+
+    handle_status_event: function(data) {
+        if (data.target_type == 'pipeline') {
+            // don't persist the change
+            this.set('status', data.status);
+            console.log(data);
+        }
+        else if (data.target_type == 'unit') {
+            // update the unit's status
+            this.store.update('unit', {
+                id: data.target,
+                status: data.status,
+            });
+            console.log(data);
+        }
+    },
+
+    handle_log_event: function(data) {
+        msg = App.util.log_event_to_html(data);
+        this.set("executionResult", this.get("executionResult")+msg+"\n");
+        console.log(msg);
     },
 
     updateEdge: function(edge, cntInfo) {

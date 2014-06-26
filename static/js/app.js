@@ -183,15 +183,15 @@ App.util = {
      *
      * @param {Object} msg Object to convert
      */
-    event_to_html: function(msg) {
+    log_event_to_html: function(data) {
         // TODO: add some actual decoration
-        var res = msg.content.msg;
-        if(msg.content.src.pipeline) {
-            if(msg.content.src.unit) {
-                res = msg.content.src.pipeline+"."+msg.content.src.unit+": "+res;
+        var res = data.msg;
+        if(data.src.pipeline) {
+            if(data.src.unit) {
+                res = data.src.pipeline+"."+data.src.unit+": "+res;
             }
             else {
-                res = msg.content.src.pipeline+": "+res;
+                res = data.src.pipeline+": "+res;
             }
         }
         else {

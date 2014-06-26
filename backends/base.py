@@ -105,7 +105,7 @@ class GenericUnit(tools.Runnable):
         """
         
         # inform the front-end
-        msg = tools.Status.create_msg(self.status)
+        msg = tools.EventTool.create_status_msg(self.status)
         self.logger.info(msg)
 
     def to_dict(self):
@@ -287,7 +287,8 @@ class GenericPipeline(tools.Runnable):
         """
 
         # inform the front-end about status change
-        self.logger.info(tools.Status.create_msg(self.status))
+        msg = tools.EventTool.create_status_msg(self.status)
+        self.logger.info(msg)
 
     def to_dict(self):
         """Returns a dict, conforming to the 'pipeline' model definition on the

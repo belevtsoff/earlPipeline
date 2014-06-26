@@ -9,22 +9,6 @@ class Status(object):
     FINISHED = 1
     RUNNING = 2
     FAILED = 3
-    keyword = "STATUS"
-    pattern = re.compile("^%s: (%s|%s|%s)$"
-            % (keyword, FINISHED, RUNNING, FAILED))
-
-    @staticmethod
-    def create_msg(status):
-        """Creates a status message, given the status code"""
-        return "%s: %s" % (Status.keyword, status)
-
-    @staticmethod
-    def parse_msg(msg):
-        """parses status message and returns status-code, or None"""
-        m = Status.pattern.match(msg)
-        if m:
-            return m.groups()[0]
-        return m
 
     @staticmethod
     def assert_valid(status):
@@ -36,6 +20,95 @@ class Status(object):
                 or istatus == Status.FAILED
         except:
             raise ValueError("Invalid status: %s" % status)
+
+
+class EventTool(object):
+    """This class contains definitions of all special event-types, which are
+    supposed to be understood by the front-end. For custom event type,
+    implement the static methods '(your_type)_record2dict' and
+    'create_(your_type)_msg' for converting your log record to a
+    JSON-serializable dict and creating an event msg recpectively."""
+    # <EVENT_TYPE:event_data>
+    pattern = re.compile("^<([A-Z]*):(.*)>$")
+    format_string = "<%s:%s>"
+
+    @staticmethod
+    def parse_log_record(record):
+        unit = None
+        pipeline = None
+        srcs = record.name.split(".")
+
+        # srcs[0] is a backend stub
+        if len(srcs) == 3:
+            pipeline = srcs[1]
+            unit = srcs[2]
+        elif len(srcs) == 2:
+            pipeline = srcs[1]
+
+        # assign parsed attributes
+        record.unit, record.pipeline = unit, pipeline
+
+        m = EventTool.pattern.match(record.msg)
+        if m:
+            event_type, event_data = m.groups()
+        else:
+            event_type, event_data = "LOG", record.msg
+
+        # assign parsed attributes
+        record.event_type, record.event_data = event_type, event_data
+
+        if event_type == "STATUS":
+            return EventTool.status_record2dict(record)
+        elif event_type == "LOG":
+            return EventTool.log_record2dict(record)
+
+    @staticmethod
+    def status_record2dict(record):
+        status = record.event_data
+        if record.pipeline:
+            if record.unit:
+                target_type = 'unit'
+                target = record.unit
+
+            else:
+                target_type = 'pipeline'
+                target = record.pipeline
+            
+            res = {
+                    'type': 'status',
+                    'data': {
+                            'time': record.created,
+                            'status': status,
+                            'target_type': target_type,
+                            'target': target
+                        }
+                    }
+            return res
+        else:
+            # if no pipeline specified, send it as a log event
+            return EventTool.log_record2dict(record)
+
+    @staticmethod
+    def create_status_msg(status_code):
+        """Creates a status message, given the status code"""
+        Status.assert_valid(status_code)
+        return EventTool.format_string % ("STATUS", status_code)
+
+    @staticmethod
+    def log_record2dict(record):
+        res = {
+                'type': 'log',
+                'data': {
+                        'time': record.created,
+                        'src': {
+                            'unit': record.unit,
+                            'pipeline': record.pipeline,
+                            },
+                        'msg': record.msg,
+                    }
+                }
+
+        return res
 
 
 class Runnable(object):
@@ -216,53 +289,5 @@ class WebSocketLogHandler(logging.Handler):
         self.stream = stream
 
     def emit(self, record):
-        # check source
-        unit = None
-        pipeline = None
-        srcs = record.name.split(".")
-
-
-        # srcs[0] is a backend stub
-        if len(srcs) == 3:
-            pipeline = srcs[1]
-            unit = srcs[2]
-        elif len(srcs) == 2:
-            pipeline = srcs[1]
-
-        # check if it is a status update
-        status = Status.parse_msg(record.msg)
-        if status and pipeline:
-            ppl = self.stream.ppl
-
-            if unit:
-                target_type = 'unit'
-                target = unit
-
-            else:
-                target_type = 'pipeline'
-                target = pipeline
-            
-            res = {
-                    'type': 'status',
-                    'content': {
-                            'time': record.created,
-                            'status': status,
-                            'target_type': target_type,
-                            'target': target
-                        }
-                    }
-
-        else:
-            res = {
-                    'type': 'log',
-                    'content': {
-                            'time': record.created,
-                            'src': {
-                                'unit': unit,
-                                'pipeline': pipeline,
-                                },
-                            'msg': record.msg,
-                        }
-                    }
-
+        res = EventTool.parse_log_record(record)
         self.stream.write_message(res)
