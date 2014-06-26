@@ -14,8 +14,17 @@ jsPlumb.bind("ready", function () {
 
 // routes
 App.Router.map(function () {
+    this.resource('pipelines', {path: "/pipelines"}, function() {
+        this.route('new', {path: "/new"});
+    });
     this.resource('pipeline', {path: "/pipelines/:pipeline_id"});
 });
+
+App.IndexRoute = Ember.Route.extend({
+    beforeModel: function() {
+        this.transitionTo('pipelines');
+    }
+})
 
 App.PipelineRoute = Em.Route.extend({
     model: function(params) {
@@ -28,21 +37,23 @@ App.PipelineRoute = Em.Route.extend({
 
     renderTemplate: function () {
 
-        this.render('pipeline', {
-            into: 'application',
-            outlet: 'pipeline',
+        this.render('pipeline');
+
+        this.render('pipeline-units', {
+            into: 'pipeline',
+            outlet: 'pipeline-units',
             controller: this.controllerFor('pipeline')
         });
 
-        this.render('pipelineControls', {
-            into: 'application',
-            outlet: 'pipelineControls',
+        this.render('pipeline-controls', {
+            into: 'pipeline',
+            outlet: 'pipeline-controls',
             controller: this.controllerFor('pipeline')
         });
 
-        this.render('metaUnits', {
-            into: 'application',
-            outlet: 'units',
+        this.render('meta-units', {
+            into: 'pipeline',
+            outlet: 'meta-units',
             controller: this.controllerFor('metaUnits')
         });
     },
