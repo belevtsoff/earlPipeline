@@ -34,10 +34,6 @@ App.PipelinesRoute = Ember.Route.extend({
 
 App.PipelineRoute = Em.Route.extend({
     model: function(params) {
-        // When loading a new pipeline, unload all the units and edges from the
-        // cache to avoid naming conflicts
-        this.store.unloadAll('unit');
-        this.store.unloadAll('edge');
         return this.store.find('pipeline', params.pipeline_id)
     },
 
@@ -76,9 +72,6 @@ App.PipelineRoute = Em.Route.extend({
         //this.controllerFor('pipelines').set('model', this.store.find('pipeline'));
 
         // bind connection events to the proper handler
-        jsPlumb.unbind("connection");
-        jsPlumb.unbind("connectionDetached");
-        jsPlumb.unbind("connectionMoved");
         jsPlumb.bind("connection", function (info) {
             pplController.send('connect', info);
         });
@@ -102,8 +95,25 @@ App.PipelineRoute = Em.Route.extend({
         ws.onmessage = function (evt) {
             pplController.send("handle_server_event", evt.data);
         };
-        ws.onclose = function() {
-            alert('Event-stream connection to server is dropped for some reason! Try reloading the page.');
+        ws.onclose = function(evt) {
+            if(!evt.wasClean)
+                alert('Event-stream connection to server is dropped for some reason! Try reloading the page.');
+        }
+    },
+
+    actions: {
+        // cleanup
+        willTransition: function(transition) {
+            jsPlumb.unbind("connection");
+            jsPlumb.unbind("connectionDetached");
+            jsPlumb.unbind("connectionMoved");
+            
+            // When loading a new pipeline, unload all the units and edges
+            // from the cache to avoid naming conflicts
+            this.store.unloadAll('unit');
+            this.store.unloadAll('edge');
+
+            this.get('controller.event_bus').close();
         }
     }
 });

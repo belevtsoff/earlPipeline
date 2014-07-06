@@ -114,10 +114,10 @@
         {{!! The main panel, containig interactive units}}
         <div class="col-md-9" id="pipeline-container">
             <div class="info-panel units-box" oncontextmenu="return false;">
-                {{!#each node in controller.nodes itemController="unit"}}
+                {{!#each node in nodes itemController="unit"}}
                     {{!view App.Item}}
                 {{!/each}}
-                {{!loadConnections controller.edges.content}}
+                {{!!loadConnections edges.content}}
             </div>
         </div>
 

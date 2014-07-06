@@ -26,6 +26,9 @@ App.Item = Em.View.extend({
     //}
 
     this.initElement();
+
+    // report to the controller that the element has been rendered
+    this.get('controller').send('elementRendered', this.get('controller.id'));
   },
 
   // cleanup

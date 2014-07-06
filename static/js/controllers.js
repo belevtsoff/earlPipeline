@@ -109,6 +109,8 @@ App.PipelineController = Ember.ObjectController.extend(App.Runnable, {
     //needs: ['pipelines'],
     executionResult: "",
 
+    renderedUnits: [],
+
     actions: {
         /* triggered when two units are manually connected */
         connect: function(jsPlumbInfo) {
@@ -231,6 +233,40 @@ App.PipelineController = Ember.ObjectController.extend(App.Runnable, {
                     console.log(event.data)
             }
         },
+
+        // Called by a Unit View, to report that it has been rendered. Once all
+        // units are rendered, the 'allUnitsRendered' event is fired. This is
+        // done to make sure all units are rendered before connections between
+        // them are drawn.
+        elementRendered: function(id) {
+            console.log('Finished rendering '+id);
+            this.renderedUnits.push(id);
+
+
+            // TODO: this maybe too slow
+            if(this.renderedUnits.length == this.get('nodes.content.length')) {
+                this.send('allUnitsRendered');
+                this.renderedUnits = [];
+            }
+        },
+
+        // Once all units are rendered, draw connections between them
+        allUnitsRendered: function() {
+            console.log('all units rendered');
+            this.loadConnections();
+        },
+    },
+
+    // Draw connections between units
+    loadConnections: function() {
+        this.get('edges').then(function(edges) {
+            if(edges) {
+                for (var i=0; i<edges.get('content').length; i++) {
+                    var edge = edges.get('content')[i];
+                    App.util.plumbConnect(edge);
+                }
+            }
+        });
     },
 
     handle_status_event: function(data) {
