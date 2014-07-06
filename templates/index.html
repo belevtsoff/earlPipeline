@@ -36,7 +36,7 @@
                 {{!#link-to "pipelines" tagName="li"}}
                     <a style="cursor:pointer" {{!bind-attr href="view.href"}}>Dashboard</a>
                 {{!/link-to}}
-                {{!#link-to "pipeline" "Ppl1" tagName="li"}}
+                {{!#link-to "pipeline" App.currentPipeline tagName="li"}}
                     <a style="cursor:pointer" {{!bind-attr href="view.href"}}>Pipeline Constructor</a>
                 {{!/link-to}}
             </ul>
