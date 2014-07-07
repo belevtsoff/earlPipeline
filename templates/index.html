@@ -53,7 +53,6 @@
                 <thead>
                     <tr>
                         <th>Name</th>
-                        <th>Backend</th>
                         <th>Status</th>
                         <th></th>
                     </tr>
@@ -62,7 +61,6 @@
                     {{!#each itemController="pipeline"}}
                         <tr {{!bind-attr class="isRunning:info hasFailed:danger"}}>
                             <td>{{!id}}</td>
-                            <td><font color="grey">Unknown</font></td>
                             <td>{{!statusToString status}}</td>
                             <td>
                                 <p class="text-center">
