@@ -1,11 +1,54 @@
-//App.PipelinesController = Ember.ArrayController.extend({
-    //sortProperties: ['name'],
-    //sortAscending: true
-//});
+App.PipelinesController = Ember.ArrayController.extend({
+    actions: {
+        /* Handles a server event, sent via the websocket. The message is
+         * supposed to be a JSON-parsable string, of the object of the
+         * following forms:
+         * 
+         * For status update:
+         * {
+         *     type: 'status',
+         *     content: {
+         *         time: log time,
+         *         status: new status,
+         *         target_type: 'unit' or 'pipeline',
+         *         target: name of the target object,
+         *     }
+         * }
+         *
+         * Messages of type 'status' will be interpreted as a signal to change
+         * running status of a corresponding pipeline. Other messages
+         * will be ignored */
+        handle_server_event: function(data) {
+            var event = $.parseJSON(data);
+            
+            // handle the event
+            switch(event.type) {
+                case 'status':
+                    this.handle_status_event(event.data);
+                    break;
+                default:
+                    // ignore
+                    console.log(event)
+                    break;
+            }
+        },
+    },
+
+    handle_status_event: function(data) {
+        if (data.target_type == 'pipeline') {
+            var ppl = this.get('content').filterBy('id', data.target)[0];
+            ppl.set('status', data.status);
+        }
+    }
+});
 
 App.Runnable = Ember.Mixin.create({
     isRunning: null,
     hasFailed: null,
+
+    init: function() {
+        this.statusChanged();
+    },
 
     statusChanged: function() {
         // using 'if' instead of 'switch' for type conversion
@@ -335,6 +378,6 @@ Ember.Handlebars.helper("statusToString", function(status_code) {
         return "Finished"
     else if (status_code == App.util.status_codes.RUNNING)
         return "Running"
-    else if (status_code == App.util.status_codes.FINISHED)
+    else if (status_code == App.util.status_codes.FAILED)
         return "Failed"
 });

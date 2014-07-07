@@ -29,6 +29,28 @@ App.IndexRoute = Ember.Route.extend({
 App.PipelinesRoute = Ember.Route.extend({
     model: function() {
         return this.store.find('pipeline');
+    },
+
+    setupController: function(controller, model) {
+        controller.set('model', model);
+
+        // initialize a WebSocket connection for event passing. This connection is mainly for status event passing
+        var url = App.util.create_pipelines_url('event_bus');
+        
+        var conn_id = Date.now();
+        url = App.util.create_ws_origin() + url + "?connId=" + conn_id;
+
+        var ws = new WebSocket(url);
+        App.util.bind_websocket(ws, controller);
+    },
+
+    actions: {
+        // cleanup
+        
+
+        willTransition: function(transition) {
+            this.get('controller.event_bus').close();
+        }
     }
 })
 
@@ -83,22 +105,12 @@ App.PipelineRoute = Em.Route.extend({
         });
 
         // initialize a WebSocket connection for event passing
-        // TODO: close this connection before route switch
         var url = App.util.create_pipeline_url(pplModel.get('id'), 'event_bus');
         var conn_id = Date.now();
         url = App.util.create_ws_origin() + url + "?connId=" + conn_id;
 
         var ws = new WebSocket(url);
-        ws.onopen = function() {
-            pplController.set("event_bus", ws);
-        };
-        ws.onmessage = function (evt) {
-            pplController.send("handle_server_event", evt.data);
-        };
-        ws.onclose = function(evt) {
-            if(!evt.wasClean)
-                alert('Event-stream connection to server is dropped for some reason! Try reloading the page.');
-        }
+        App.util.bind_websocket(ws, pplController);
     },
 
     actions: {
@@ -110,8 +122,8 @@ App.PipelineRoute = Em.Route.extend({
             
             // When loading a new pipeline, unload all the units and edges
             // from the cache to avoid naming conflicts
-            this.store.unloadAll('unit');
             this.store.unloadAll('edge');
+            this.store.unloadAll('unit');
 
             this.get('controller.event_bus').close();
         }
@@ -241,8 +253,33 @@ App.util = {
         return url + '/' + endpoint
     },
 
+    /* Creates a url to pipelines, based on the current adapter
+     * settings
+     *
+     * @param {string} endpoint Endpoint for the current url
+     */
+    create_pipelines_url: function(endpoint) {
+        // TODO: this is still ugly
+        var url = App.__container__.lookup('adapter:application')
+            .buildURL('pipelines')
+        return url + '/' + endpoint
+    },
+
     /* Constructs origin for a WebSocket URL */
     create_ws_origin: function() {
         return window.location.origin.replace('http', 'ws');
+    },
+
+    bind_websocket: function(ws, controller) {
+        ws.onopen = function() {
+            controller.set("event_bus", ws);
+        };
+        ws.onmessage = function (evt) {
+            controller.send("handle_server_event", evt.data);
+        };
+        ws.onclose = function(evt) {
+            if(!evt.wasClean)
+                alert('Event-stream connection to server is dropped for some reason! Try reloading the page.');
+        }
     }
 }

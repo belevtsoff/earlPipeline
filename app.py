@@ -136,18 +136,28 @@ class EdgeHandler(tornado.web.RequestHandler):
         ppl.disconnect(edge.src, edge.srcPort, edge.dst, edge.dstPort)
         self.write({})
 
-class PipelineEventHandler(tornado.websocket.WebSocketHandler):
-    def open(self, pid):
+
+class PipelinesEventHandler(tornado.websocket.WebSocketHandler):
+    def open(self):
         # add to clients
         self.id = self.get_argument("connId")
-        self.ppl = pipelines.get_pipeline(pid)
 
         self.stream.set_nodelay(True)
 
         self.log_handler = WebSocketLogHandler(self)
         pipelines.event_server.add_client(self)
 
-        print "Client %s has connected to %s" % (self.id, pid)
+        print "Client %s has connected" % self.id
+
+    def on_close(self):
+        print "Client %s has disconnected" % self.id
+        pipelines.event_server.remove_client(self)
+
+
+class PipelineEventHandler(PipelinesEventHandler):
+    def open(self, pid):
+        super(PipelineEventHandler, self).open()
+        self.ppl = pipelines.get_pipeline(pid)
 
     def on_message(self, message):
         if message == "RUN":
@@ -159,14 +169,11 @@ class PipelineEventHandler(tornado.websocket.WebSocketHandler):
         else:
             print message
 
-    def on_close(self):
-        print "Client %s has disconnected from %s" % (self.id, self.ppl.name)
-        pipelines.event_server.remove_client(self)
-
 
 handlers = [
     (r'/', IndexHandler),
     (r'/api/pipelines', PipelinesHandler),
+    (r'/api/pipelines/event_bus', PipelinesEventHandler),
     (r'/api/pipelines/([^/]*)', PipelineHandler),
     (r'/api/pipelines/([^/]*)/units', UnitsHandler),
     (r'/api/pipelines/([^/]*)/edges', EdgesHandler),

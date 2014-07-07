@@ -59,7 +59,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {{!#each}}
+                    {{!#each itemController="pipeline"}}
                         <tr {{!bind-attr class="isRunning:info hasFailed:danger"}}>
                             <td>{{!id}}</td>
                             <td><font color="grey">Unknown</font></td>
