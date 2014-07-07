@@ -16,6 +16,10 @@ App.Item = Em.View.extend({
   didInsertElement: function () {
     // jQuery handle on this element
     this.domElement = $('#' + this.get('element.id'));
+    
+    // store id in an instance, so that it can be accessed even when the
+    // controller is not available
+    this.id = this.get('controller.id');
 
     // TODO: avoid the ember-data error for wrong indices
     //if (undefined == type.get('id')) {
@@ -45,7 +49,7 @@ App.Item = Em.View.extend({
     }
 
     // clean-up settings dialogs
-    $('#'+this.get('controller.id')+'-settings').remove();
+    $('#'+this.id+'-settings').remove();
   },
     
   templateName: 'single-unit',
