@@ -46,8 +46,6 @@ App.PipelinesRoute = Ember.Route.extend({
 
     actions: {
         // cleanup
-        
-
         willTransition: function(transition) {
             this.get('controller.event_bus').close();
         }
@@ -56,7 +54,7 @@ App.PipelinesRoute = Ember.Route.extend({
 
 App.PipelineRoute = Em.Route.extend({
     model: function(params) {
-        return this.store.find('pipeline', params.pipeline_id)
+        return this.store.find('pipeline', params.pipeline_id);
     },
 
     renderTemplate: function () {
@@ -82,17 +80,15 @@ App.PipelineRoute = Em.Route.extend({
         });
     },
 
-    setupController: function(pplController, pplModel) {
+    activate: function() {
+        var pplModel = this.modelFor('pipeline');
+        var pplController = this.controllerFor('pipeline');
+        
         // Update the 'currentPipeline' property. This is needed to form proper
         // server API calls when working with units/edges. Fired whenever the
         // route is changed
         App.set('currentPipeline', pplModel);
-
-        // set up controllers with proper models
-        this.controllerFor('pipeline').set('model', pplModel);
-        this.controllerFor('metaUnits').set('model', this.store.find('metaUnit'));
-        //this.controllerFor('pipelines').set('model', this.store.find('pipeline'));
-
+        
         // bind connection events to the proper handler
         jsPlumb.bind("connection", function (info) {
             pplController.send('connect', info);
@@ -113,12 +109,22 @@ App.PipelineRoute = Em.Route.extend({
         App.util.bind_websocket(ws, pplController);
     },
 
+    setupController: function(pplController, pplModel) {
+        // set up controllers with proper models
+        this.controllerFor('pipeline').set('model', pplModel);
+        this.controllerFor('metaUnits').set('model', this.store.find('metaUnit'));
+        //this.controllerFor('pipelines').set('model', this.store.find('pipeline'));
+
+    },
+
     actions: {
         // cleanup
         willTransition: function(transition) {
             jsPlumb.unbind("connection");
             jsPlumb.unbind("connectionDetached");
             jsPlumb.unbind("connectionMoved");
+
+            this.controllerFor('pipeline').edgesLoaded = false;
             
             // When loading a new pipeline, unload all the units and edges
             // from the cache to avoid naming conflicts
