@@ -153,6 +153,7 @@ App.PipelineController = Ember.ObjectController.extend(App.Runnable, {
     executionResult: "",
 
     renderedUnits: [],
+    edgesLoaded: false,
 
     actions: {
         /* triggered when two units are manually connected */
@@ -283,13 +284,15 @@ App.PipelineController = Ember.ObjectController.extend(App.Runnable, {
         // them are drawn.
         elementRendered: function(id) {
             console.log('Finished rendering '+id);
-            this.renderedUnits.push(id);
 
+            if (!this.edgesLoaded) {
+                this.renderedUnits.push(id);
 
-            // TODO: this maybe too slow
-            if(this.renderedUnits.length == this.get('nodes.content.length')) {
-                this.send('allUnitsRendered');
-                this.renderedUnits = [];
+                // TODO: this maybe too slow
+                if(this.renderedUnits.length == this.get('nodes.content.length')) {
+                    this.send('allUnitsRendered');
+                    this.renderedUnits = [];
+                }
             }
         },
 
@@ -297,6 +300,7 @@ App.PipelineController = Ember.ObjectController.extend(App.Runnable, {
         allUnitsRendered: function() {
             console.log('all units rendered');
             this.loadConnections();
+            this.edgesLoaded = true;
         },
     },
 
