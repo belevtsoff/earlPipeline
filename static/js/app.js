@@ -54,7 +54,9 @@ App.PipelinesRoute = Ember.Route.extend({
 
 App.PipelineRoute = Em.Route.extend({
     model: function(params) {
-        return this.store.find('pipeline', params.pipeline_id);
+        var pplPromise = this.store.find('pipeline', params.pipeline_id);
+        return pplPromise;
+        
     },
 
     renderTemplate: function () {
@@ -80,15 +82,18 @@ App.PipelineRoute = Em.Route.extend({
         });
     },
 
-    activate: function() {
-        var pplModel = this.modelFor('pipeline');
-        var pplController = this.controllerFor('pipeline');
-        
+    setupController: function(pplController, pplModel) {
+        console.log('setup');
+
         // Update the 'currentPipeline' property. This is needed to form proper
         // server API calls when working with units/edges. Fired whenever the
         // route is changed
         App.set('currentPipeline', pplModel);
         
+        // set up controllers with proper models
+        this.controllerFor('metaUnits').set('model', this.store.find('metaUnit'));
+        pplController.set('model', pplModel);
+
         // bind connection events to the proper handler
         jsPlumb.bind("connection", function (info) {
             pplController.send('connect', info);
@@ -109,14 +114,6 @@ App.PipelineRoute = Em.Route.extend({
         App.util.bind_websocket(ws, pplController);
     },
 
-    setupController: function(pplController, pplModel) {
-        // set up controllers with proper models
-        this.controllerFor('pipeline').set('model', pplModel);
-        this.controllerFor('metaUnits').set('model', this.store.find('metaUnit'));
-        //this.controllerFor('pipelines').set('model', this.store.find('pipeline'));
-
-    },
-
     actions: {
         // cleanup
         willTransition: function(transition) {
@@ -130,6 +127,7 @@ App.PipelineRoute = Em.Route.extend({
             // from the cache to avoid naming conflicts
             this.store.unloadAll('edge');
             this.store.unloadAll('unit');
+            this.store.unloadAll('pipeline');
 
             this.get('controller.event_bus').close();
         }

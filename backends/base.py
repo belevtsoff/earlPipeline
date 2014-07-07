@@ -301,9 +301,11 @@ class GenericPipeline(tools.Runnable):
 
         res = {
                 'id': self.name,
-                'nodes': [unit.name for unit in self.units],
-                'edges': [edge.id for edge in self.edges],
-                'status': self.status
+                'status': self.status,
+                'links' : {
+                        'nodes': '/api/pipelines/'+self.name+'/units',
+                        'edges': '/api/pipelines/'+self.name+'/edges',
+                    },
                 }
 
         return res

@@ -14,4 +14,4 @@ App.ApplicationAdapter = DS.RESTAdapter.extend({
     },
 
     namespace: App.get('namespace'),
-})
+});
