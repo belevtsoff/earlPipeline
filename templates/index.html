@@ -128,19 +128,21 @@
     </script>
 
     <script type="text/x-handlebars" data-template-name="pipeline-output">
-        <h3>Status: 
-            {{!#if isRunning}}
-                <font color="green">running</font>
-            {{!else}}
-                {{!#if hasFailed}}
-                    <font color="red">failed</font>
+        <div class="result-header">
+            <h3 style="margin-top: 13px">Status: 
+                {{!#if isRunning}}
+                    <font color="green">running</font>
                 {{!else}}
-                    <font color="grey">stopped</font>
+                    {{!#if hasFailed}}
+                        <font color="red">failed</font>
+                    {{!else}}
+                        <font color="grey">stopped</font>
+                    {{!/if}}
                 {{!/if}}
-            {{!/if}}
-        </h3>
-        <hr>
-        <div style="white-space: pre-wrap;">{{!executionResult}}</div>
+            </h3>
+            <hr>
+        </div>
+        <div class="result-content">{{!executionResult}}</div>
     </script>
 
 

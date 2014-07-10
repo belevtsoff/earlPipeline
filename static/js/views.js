@@ -342,6 +342,6 @@ App.Item = Em.View.extend({
 
 /* Displays the output of the server, after it has ran the pipeline */
 App.OutputView = Ember.View.extend({
-    tagName: "aside",
+    tagName: "div",
     templateName: "pipeline-output",
 });
