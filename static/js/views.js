@@ -344,4 +344,17 @@ App.Item = Em.View.extend({
 App.OutputView = Ember.View.extend({
     tagName: "div",
     templateName: "pipeline-output",
+    didInsertElement: function() {
+        this.scrollBottom();
+    },
+
+    scrollBottom: function() {
+        var win = $('#logging-window');
+
+        // works correctly only with animation.. weird
+        win.animate({
+            scrollTop: win[0].scrollHeight+10000,
+        }, 1000);
+
+    }.observes('controller.log_text'),
 });
