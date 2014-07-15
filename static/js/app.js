@@ -89,6 +89,8 @@ App.PipelineRoute = Em.Route.extend({
         // server API calls when working with units/edges. Fired whenever the
         // route is changed
         App.set('currentPipeline', pplModel);
+
+        pplModel.reload();
         
         // set up controllers with proper models
         this.controllerFor('metaUnits').set('model', this.store.find('metaUnit'));

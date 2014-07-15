@@ -4,6 +4,7 @@ App.Pipeline = DS.Model.extend({
     nodes: DS.hasMany('unit', {async: true}),
     edges: DS.hasMany('edge', {async: true}),
     status: DS.attr('string'),
+    log: DS.attr(),
 });
 
 App.Edge = DS.Model.extend({

@@ -150,10 +150,18 @@ App.UnitController = Ember.ObjectController.extend(App.Runnable, {
 
 App.PipelineController = Ember.ObjectController.extend(App.Runnable, {
     //needs: ['pipelines'],
-    executionResult: "",
 
     renderedUnits: [],
     edgesLoaded: false,
+
+    log_text: "",
+    update_log_text: function() {
+        var log = this.get('log');
+        var tmp = "";
+        for(var i=0; i<log.length; i++) 
+            tmp += App.util.log_event_to_html(log[i])+"\n"
+        this.set('log_text', tmp);
+    }.observes('log'),
 
     actions: {
         /* triggered when two units are manually connected */
@@ -220,6 +228,7 @@ App.PipelineController = Ember.ObjectController.extend(App.Runnable, {
         
         /* Execute the current pipeline and get the data */
         run: function() {
+            this.set('log', []); // assuming server does the same
             this.get("event_bus").send("RUN");
         },
 
@@ -333,9 +342,15 @@ App.PipelineController = Ember.ObjectController.extend(App.Runnable, {
     },
 
     handle_log_event: function(data) {
-        msg = App.util.log_event_to_html(data);
-        this.set("executionResult", this.get("executionResult")+msg+"\n");
-        console.log(msg);
+        // TODO: this can become very slow when the log grows large, fix it
+        // somehow
+        if(data.src.pipeline == App.currentPipeline.id) {
+            var log = this.get('log');
+            log.push(data);
+
+            // call manually
+            this.update_log_text();
+        }
     },
 
     updateEdge: function(edge, cntInfo) {
