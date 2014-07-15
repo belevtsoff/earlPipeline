@@ -176,6 +176,7 @@ App.Item = Em.View.extend({
             message: "", // generated when shown
             id: dialog_id,
             autodestroy: false,
+            type: BootstrapDialog.TYPE_SUCCESS,
 
             buttons: [{
                 label: 'Ok',
@@ -354,7 +355,7 @@ App.OutputView = Ember.View.extend({
         // works correctly only with animation.. weird
         win.animate({
             scrollTop: win[0].scrollHeight+10000,
-        }, 1000);
+        }, 10);
 
     }.observes('controller.log_text'),
 });
