@@ -10,14 +10,14 @@
 }
 
 .units-box {
-    height: 500px;
+    height: 78%;
 }
 
 .result-box {
     font-family:helvetica;
     padding:10px 10px;
     /*overflow: auto;*/
-    height: 500px;
+    height: 78%;
 }
 
 .result-content {
