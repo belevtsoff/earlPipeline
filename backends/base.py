@@ -299,6 +299,8 @@ class GenericPipeline(tools.Runnable):
         res : dict
             JSON-serializable version of this object"""
 
+        log = hasattr(self, "_log") and self._log or []
+
         res = {
                 'id': self.name,
                 'status': self.status,
@@ -306,6 +308,7 @@ class GenericPipeline(tools.Runnable):
                         'nodes': '/api/pipelines/'+self.name+'/units',
                         'edges': '/api/pipelines/'+self.name+'/edges',
                     },
+                'log': log
                 }
 
         return res

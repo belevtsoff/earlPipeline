@@ -613,8 +613,8 @@ class Pipeline(Connections, GenericPipeline):
     for reading and writing data, which outline the main data-flow in the
     system."""
     def __init__(self, name='UnnamedPpl'):
-        super(Pipeline, self).__init__()
         self.name = name
+        super(Pipeline, self).__init__()
 
     # required 'name' property
     def _get_name(self):

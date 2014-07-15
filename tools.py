@@ -155,13 +155,25 @@ class PipelineManager(object):
     def add_pipeline(self, ppl):
         self._pipelines[ppl.name] = ppl
 
+        # add log handlers
+        obj_handler = ObjectLogHandler(ppl)
+        ppl.obj_handler_id = "%s.ObjectLogHandler" % ppl.name
+        ppl._log = []
+
+        self.event_server.add_client(id, obj_handler)
+
+
     def get_pipeline(self, name):
         return self._pipelines[name]
 
     def start_pipeline(self, name):
         ppl = self.get_pipeline(name)
 
+        # clean the object log
+        ppl._log = []
+
         # if hasn't been started before
+        # TODO: stupid code
         if not name in self._running_processes.keys():
             self.event_server.add_pipeline(ppl)
         else:
@@ -228,26 +240,27 @@ class LogEventServer(object):
         return self.queue_listener is not None
 
     @if_running
-    def add_client(self, client):
-        self._clients[client.id] = client
+    def add_client(self, id, log_handler):
+        self._clients[id] = log_handler
 
         # add handler to a QueueListener
         # TODO: this is bad because all other clients have to wait until this
         # function returns
         self.queue_listener.stop()
         handlers = list(self.queue_listener.handlers)
-        handlers.append(client.log_handler)
+        handlers.append(log_handler)
         self.queue_listener = QueueListener(self.queue, *handlers)
         self.queue_listener.start()
 
     @if_running
-    def remove_client(self, client):
+    def remove_client(self, id):
 
-        del self._clients[client.id]
+        log_handler = self._clients[id]
+        del self._clients[id]
 
         self.queue_listener.stop()
         handlers = list(self.queue_listener.handlers)
-        handlers.remove(client.log_handler)
+        handlers.remove(log_handler)
         self.queue_listener = QueueListener(self.queue, *handlers)
         self.queue_listener.start()
 
@@ -295,3 +308,17 @@ class WebSocketLogHandler(logging.Handler):
     def emit(self, record):
         res = EventTool.parse_log_record(record)
         self.stream.write_message(res)
+
+class ObjectLogHandler(logging.Handler):
+    """Simply writes all logged caught event to a specified attribute of the
+    passed object instance"""
+    def __init__(self, obj, attr="_log"):
+        super(ObjectLogHandler, self).__init__()
+        self.obj = obj
+        self.attr = attr
+
+    def emit(self, record):
+        data = EventTool.parse_log_record(record)
+        if data['type'] == 'log':
+            if data['data']['src']['pipeline'] == self.obj.name:
+                getattr(self.obj, self.attr).append(data['data'])

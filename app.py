@@ -140,18 +140,18 @@ class EdgeHandler(tornado.web.RequestHandler):
 class PipelinesEventHandler(tornado.websocket.WebSocketHandler):
     def open(self):
         # add to clients
-        self.id = self.get_argument("connId")
+        self.id = "gui:%s" % self.get_argument("connId")
 
         self.stream.set_nodelay(True)
 
         self.log_handler = WebSocketLogHandler(self)
-        pipelines.event_server.add_client(self)
+        pipelines.event_server.add_client(self.id, self.log_handler)
 
         print "Client %s has connected" % self.id
 
     def on_close(self):
         print "Client %s has disconnected" % self.id
-        pipelines.event_server.remove_client(self)
+        pipelines.event_server.remove_client(self.id)
 
 
 class PipelineEventHandler(PipelinesEventHandler):
