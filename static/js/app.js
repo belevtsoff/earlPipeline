@@ -99,8 +99,6 @@ App.PipelineRoute = Em.Route.extend({
     },
 
     setupController: function(pplController, pplModel) {
-        console.log('setup');
-
         // Update the 'currentPipeline' property. This is needed to form proper
         // server API calls when working with units/edges. Fired whenever the
         // route is changed

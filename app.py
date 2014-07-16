@@ -24,14 +24,6 @@ class IndexHandler(tornado.web.RequestHandler):
 event_server = LogEventServer()
 pipelines = PipelineManager(event_server)
 
-#pipelines.add_pipeline(backend.Pipeline('Ppl1'))
-#num = backend.Numbers()
-#lg = backend.ToLog()
-#pipelines.get_pipeline("Ppl1").add_unit(num, "numnum")
-#pipelines.get_pipeline("Ppl1").add_unit(lg, "lglg")
-#pipelines.get_pipeline("Ppl1").connect("numnum", "two", "lglg", "inp")
-#pipelines.add_pipeline(backend.Pipeline('Ppl2'))
-
 #import pdb; pdb.set_trace()
 
 def find_by_attr(seq, attr, value):
