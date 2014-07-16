@@ -237,6 +237,14 @@ App.PipelineController = Ember.ObjectController.extend(App.Runnable, {
             this.get("event_bus").send("STOP");
         },
 
+        save: function() {
+            this.get("event_bus").send("SAVE");
+        },
+
+        notImplemented: function() {
+            alert("This functionality is not yet implemented");
+        },
+
         /* Handles a server event, sent via the websocket. The message is
          * supposed to be a JSON-parsable string, of the object of the
          * following forms:

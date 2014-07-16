@@ -354,7 +354,7 @@ App.OutputView = Ember.View.extend({
         // works correctly only with animation.. weird
         win.animate({
             scrollTop: win[0].scrollHeight+10000,
-        }, 1000);
+        }, 10);
 
     }.observes('controller.log_text'),
 });
