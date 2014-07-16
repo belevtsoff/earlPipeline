@@ -173,8 +173,28 @@ class PipelineManager(object):
         self._pipelines = {}
         self._running_processes = {}
 
+        # create event server and add necessary handlers
         self.event_server = event_server
         self.event_server.start()
+
+        # stopping handler
+        stop_handler = CallbackHandler(
+                lambda evt: self.pipeline_stopper_callback(evt))
+        self.event_server.add_client("PplStopHandler", stop_handler)
+
+        # debug handler
+        #class DebugHandler(logging.Handler):
+            #def __init__(self, pplman):
+                #super(DebugHandler, self).__init__()
+                #self.pplman = pplman
+
+            #def emit(self, record):
+                #print record.msg
+                #print self.pplman._running_processes
+                #print self.pplman.event_server._clients
+                #print self.pplman.event_server._pipelines
+
+        #self.event_server.add_client("debugger", DebugHandler(self))
 
         self.pipelines_folder = 'pipelines'
 
@@ -207,7 +227,7 @@ class PipelineManager(object):
         ppl.obj_handler_id = "%s.ObjectLogHandler" % ppl.name
         ppl._log = []
 
-        self.event_server.add_client(id, obj_handler)
+        self.event_server.add_client(ppl.obj_handler_id, obj_handler)
 
 
     def get_pipeline(self, name):
@@ -232,7 +252,7 @@ class PipelineManager(object):
         # pipeline has finished running
         def run_wrapper():
             try:
-                ppl.logger.info("Staring...")
+                ppl.logger.info("Starting...")
                 ppl.run()
             except:
                 status = Status.FAILED
@@ -247,6 +267,7 @@ class PipelineManager(object):
                 if msg:
                     ppl.logger.error(msg)
 
+
         p = mp.Process(target=run_wrapper)
         ppl.status = Status.RUNNING
         p.start()
@@ -257,12 +278,28 @@ class PipelineManager(object):
 
         p = self._running_processes[name]
         p.terminate()
-        del self._running_processes[ppl.name]
 
         ppl.status = Status.FAILED
         ppl.logger.error("Interrupted by user")
 
+        self.on_pipeline_stop(ppl)
+
+    def on_pipeline_stop(self, ppl):
+        del self._running_processes[ppl.name]
         self.event_server.remove_pipeline(ppl)
+        
+    def pipeline_stopper_callback(self, event):
+        """Process a parsed log event and call 'on_pipeline_stop', if has
+        stopped for some reason"""
+        if event['type'] == "status":
+            data = event['data']
+            if data['target_type'] == 'pipeline':
+                name = data['target']
+                status = int(data['status'])
+                ppl = self.get_pipeline(name)
+                if status == Status.FINISHED or status == Status.FAILED:
+                    self.on_pipeline_stop(ppl)
+
 
 
 def if_running(f):
@@ -369,3 +406,18 @@ class ObjectLogHandler(logging.Handler):
         if data['type'] == 'log':
             if data['data']['src']['pipeline'] == self.obj.name:
                 getattr(self.obj, self.attr).append(data['data'])
+
+
+class CallbackHandler(logging.Handler):
+    """Calls an external function upon log event arrival. The
+    callback is invoked with a parsed log record as a
+    parameter"""
+    def __init__(self, callback):
+        super(CallbackHandler, self).__init__()
+        self.callback = callback
+
+    def emit(self, record):
+        data = EventTool.parse_log_record(record)
+        self.callback(data)
+
+
