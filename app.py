@@ -47,6 +47,15 @@ class PipelinesHandler(tornado.web.RequestHandler):
         pplmodels = [ppl.to_dict() for ppl in pipelines]
         self.write({'pipelines':pplmodels})
 
+    def post(self):
+        req = tornado.escape.json_decode(self.request.body)['pipeline']
+        name = req['id']
+        ppl = backend.Pipeline(name)
+        pipelines.add_pipeline(ppl)
+
+        self.write({'pipeline': ppl.to_dict()})
+
+
 class PipelineHandler(tornado.web.RequestHandler):
     def get(self, pid):
         ppl = pipelines.get_pipeline(pid)
