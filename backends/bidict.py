@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Copyright (c) 2009 Josh Bronson and contributors
-# 
+#
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation
 # files (the "Software"), to deal in the Software without
@@ -10,10 +10,10 @@
 # copies of the Software, and to permit persons to whom the
 # Software is furnished to do so, subject to the following
 # conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 # EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
 # OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -34,7 +34,7 @@ relations in Python. To keep the learning curve low, it introduces no new
 functions to the ``dict`` API you're already familiar with. It owes its
 simplicity to Python's slice syntax, which provides a handy and natural way
 of expressing the inverse mapping in a ``bidict``::
-    
+
     >>> husbands2wives = bidict({'john': 'jackie'})
     >>> husbands2wives['john'] # the forward mapping is just like with dict
     'jackie'
@@ -81,7 +81,8 @@ one-to-one mapping::
 
     >>> h2w = bidict({'bill': 'hillary', 'barack': 'michelle'})
 
-To look up a wife by husband, use the familiar subscript syntax as with a dict::
+To look up a wife by husband, use the familiar subscript syntax as with a
+dict::
 
     >>> h2w['bill']
     'hillary'
@@ -126,10 +127,10 @@ Note: ``bidict`` does not subclass ``dict``, but its API is a superset of the
 context of an injective mapping. ``bidict`` implements the ``MutableMapping``
 interface.
 
-This module also provides an ``inverted`` iterator in the spirit of the built-in
-``reversed``. Pass in a mapping to get the inverse mapping, an iterable of pairs
-to get the pairs' inverses, or any object implementing an ``__inverted__``
-method. See the ``inverted`` class for examples.
+This module also provides an ``inverted`` iterator in the spirit of the
+built-in ``reversed``. Pass in a mapping to get the inverse mapping, an
+iterable of pairs to get the pairs' inverses, or any object implementing an
+``__inverted__`` method. See the ``inverted`` class for examples.
 
 Note: "inverse" rather than "reverse" is used because it's the term used in
 mathematics and its meaning is more specific, and because "reversed" already
@@ -142,7 +143,9 @@ import re
 from collections import MutableMapping
 from functools import wraps
 
+
 class inverted(object):
+
     """
     An iterator in the spirit of ``reversed``. Useful for inverting a mapping::
 
@@ -154,7 +157,7 @@ class inverted(object):
         True
 
     Passing an iterable of pairs produces an iterable of the pairs' inverses::
-        
+
         >>> seq = [(1, 'one'), (2, 'two'), (3, 'three')]
         >>> list(inverted(seq))
         [('one', 1), ('two', 2), ('three', 3)]
@@ -173,7 +176,7 @@ class inverted(object):
         True
 
     Be careful with passing the inverse of a non-injective mapping into
-    ``dict``; mappings for like values with differing keys will be lost:: 
+    ``dict``; mappings for like values with differing keys will be lost::
 
         >>> squares = {-2: 4, -1: 1, 0: 0, 1: 1, 2: 4}
         >>> len(squares)
@@ -182,6 +185,7 @@ class inverted(object):
         3
 
     """
+
     def __init__(self, data):
         self._data = data
 
@@ -199,18 +203,19 @@ class inverted(object):
         try:
             for k, v in data.iteritems():
                 yield v, k
-        except AttributeError: # python 3 dictionary?
+        except AttributeError:  # python 3 dictionary?
             try:
-                for k, v in data.items(): # yes
+                for k, v in data.items():  # yes
                     yield v, k
-            except AttributeError: # no, assume sequence
+            except AttributeError:  # no, assume sequence
                 for k, v in data:
                     yield v, k
-    
+
     next = __next__
 
 
 class bidict(object):
+
     """
     Bidirectional mapping implementing the ``MutableMapping`` interface, with
     additional facilities for retrieving inverse mappings. The API is a
@@ -300,10 +305,10 @@ class bidict(object):
 
     Because ~ binds less tightly than brackets, parentheses are necessary for
     something like::
-        
+
         >>> (~bi)['one']
         1
-    
+
     ``bidict``s work with ``inverted`` as expected::
 
         >>> biinv = bidict(inverted(bi))
@@ -311,7 +316,7 @@ class bidict(object):
         bidict({'one': 1})
 
     This of course creates a new object (equivalent but not identical)::
-        
+
         >>> biinv == bi.inv
         True
         >>> biinv is bi.inv
@@ -322,8 +327,9 @@ class bidict(object):
 
         >>> bi != biinv
         True
-    
-    ``bidict``s should compare as expected to instances of other mapping types::
+
+    ``bidict``s should compare as expected to instances of other mapping
+    types::
 
         >>> bi == dict([(1, 'one')])
         True
@@ -394,6 +400,7 @@ class bidict(object):
         bidict({1: 'two'})
 
     """
+
     def __init__(self, *args, **kwds):
         # using dict and inverted together like this guarantees one-to-one-ness
         # by discarding any non-one-to-one mappings:
@@ -407,7 +414,7 @@ class bidict(object):
         self._fwd = fwd
         self._bwd = bwd
         self._inv = inv
-    
+
     def __invert__(self):
         """
         Called when unary ~ operator is applied.
@@ -419,8 +426,8 @@ class bidict(object):
     def __inverted__(self):
         try:
             return self._bwd.iteritems()
-        except AttributeError: # python 3
-            return self._bwd.items()
+        except AttributeError:  # python 3
+            return iter(self._bwd.items())
 
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, self._fwd)
@@ -436,7 +443,9 @@ class bidict(object):
 
     def __getitem__(self, keyorslice):
         try:
-            start, stop, step = keyorslice.start, keyorslice.stop, keyorslice.step
+            start = keyorslice.start
+            stop = keyorslice.stop
+            step = keyorslice.step
         except AttributeError:
             # keyorslice is a key, e.g. b[key]
             return self._fwd[keyorslice]
@@ -445,7 +454,7 @@ class bidict(object):
         if (not ((start is None) ^ (stop is None))) or step is not None:
             raise TypeError('Slice must specify only either start or stop')
 
-        if start is not None: # forward lookup (by key), e.g. b[key:]
+        if start is not None:  # forward lookup (by key), e.g. b[key:]
             return self._fwd[start]
 
         # inverse lookup (by val), e.g. b[:val]
@@ -459,15 +468,17 @@ class bidict(object):
             del self._bwd[val]
 
         try:
-            start, stop, step = keyorslice.start, keyorslice.stop, keyorslice.step
+            start = keyorslice.start
+            stop = keyorslice.stop
+            step = keyorslice.step
         except AttributeError:
             # keyorslice is a key, e.g. del b[key]
             _del(keyorslice)
-        else: # keyorslice is a slice
+        else:  # keyorslice is a slice
             if (not ((start is None) ^ (stop is None))) or step is not None:
                 raise TypeError('Slice must specify only either start or stop')
 
-            if start is not None: # delete by key, e.g. del b[key:]
+            if start is not None:  # delete by key, e.g. del b[key:]
                 _del(start)
                 return
 
@@ -493,15 +504,18 @@ class bidict(object):
             self._bwd[val] = key
 
         try:
-            start, stop, step = keyorslice.start, keyorslice.stop, keyorslice.step
+            start = keyorslice.start
+            stop = keyorslice.stop
+            step = keyorslice.step
         except AttributeError:
             # keyorslice is a key, keyorval is a val, e.g. b[key] = val
             _set(keyorslice, keyorval)
-        else: # keyorslice is a slice
+        else:  # keyorslice is a slice
             if (not ((start is None) ^ (stop is None))) or step is not None:
                 raise TypeError('Slice must specify only either start or stop')
 
-            if start is not None: # start is key, keyorval is val, e.g. b[key:] = val
+            # start is key, keyorval is val, e.g. b[key:] = val
+            if start is not None:
                 _set(start, keyorval)
                 return
 
@@ -536,7 +550,7 @@ class bidict(object):
         val = self._fwd.setdefault(key, default)
         self._bwd[val] = key
         return val
-    
+
     def update(self, *args, **kwds):
         merged = dict(*args, **kwds)
         merged.update(self._fwd)
@@ -554,7 +568,8 @@ class bidict(object):
             return method(self._fwd, *args, **kwds)
         return wrapper
 
-    for methodname in '__contains__ __iter__ __len__ get keys items values'.split():
+    methodnames = '__contains__ __iter__ __len__ get keys items values'.split()
+    for methodname in methodnames:
         locals()[methodname] = _proxied_to_fwd(getattr(dict, methodname))
 
 MutableMapping.register(bidict)
@@ -564,6 +579,13 @@ MutableMapping.register(bidict)
 
 _LEGALNAMEPAT = '^[a-zA-Z][a-zA-Z0-9_]*$'
 _LEGALNAMERE = re.compile(_LEGALNAMEPAT)
+
+def empty_namedbidict(mapname, fwdname, invname):
+    """
+    Create an empty instance of a custom bidict (namedbidict). This method is
+    used to make 'namedbidict' instances picklable.
+    """
+    return namedbidict(mapname, fwdname, invname)()
 
 def namedbidict(mapname, fwdname, invname):
     """
@@ -584,14 +606,19 @@ def namedbidict(mapname, fwdname, invname):
     for name in mapname, fwdname, invname:
         if _LEGALNAMERE.match(name) is None:
             raise ValueError('"%s" does not match pattern %s' %
-                (name, _LEGALNAMEPAT))
+                             (name, _LEGALNAMEPAT))
+                             
+    __dict__ = {fwdname: property(lambda self: self),
+                invname: bidict.inv}
 
-    class custombidict(bidict):
-        locals()[fwdname] = property(lambda self: self)
-        locals()[invname] = bidict.inv
+    custombidict = type(mapname, (bidict,), __dict__)
 
-    custombidict.__name__ = mapname
+    # tell pickle how to handle this dynamically generated custom bidict
+    custombidict.__reduce__ = lambda self: \
+        (empty_namedbidict, (mapname, fwdname, invname), self.__dict__)
+
     return custombidict
+    
 
 if __name__ == '__main__':
     import doctest
