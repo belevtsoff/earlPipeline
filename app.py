@@ -52,6 +52,12 @@ class PipelineHandler(tornado.web.RequestHandler):
         ppl = pipelines.get_pipeline(pid)
         self.write({'pipeline': ppl.to_dict()})
 
+    def delete(self, pid):
+        pipelines.remove_pipeline(pid)
+        print "deleted %s" % pid
+        self.write({})
+
+
 class MetaUnitsHandler(tornado.web.RequestHandler):
     def get(self):
         munits = [munit.cls_to_dict() for munit in backend.get_unit_types()]

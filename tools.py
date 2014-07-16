@@ -224,6 +224,18 @@ class PipelineManager(object):
         with open(fname, 'w') as f:
             pickle.dump(ppl, f)
 
+    def remove_pipeline(self, name):
+        # check if not running
+        if self._running_processes.has_key(name):
+            raise Exception("Can't delete %s, it is still running" % name)
+
+        del self._pipelines[name]
+
+        # try to find the file and remove it
+        fname = os.path.join(self.pipelines_folder, name+".ppl")
+        if os.path.exists(fname):
+            os.remove(fname)
+
     def add_pipeline(self, ppl):
         self._pipelines[ppl.name] = ppl
         ppl._log = []
@@ -234,17 +246,14 @@ class PipelineManager(object):
     def start_pipeline(self, name):
         ppl = self.get_pipeline(name)
 
-        # clean the object log
+        # check if not already running
+        if self._running_processes.has_key(name):
+            raise Exception("Can't start %s, it is still running" % name)
+
+        # clear the object log
         ppl._log = []
 
-        # if hasn't been started before
-        # TODO: stupid code
-        if not name in self._running_processes.keys():
-            self.event_server.add_pipeline(ppl)
-        else:
-            p = self._running_processes[name]
-            if p.is_alive():
-                raise Exception("Can't start. The pipeline %s is still running" % name)
+        self.event_server.add_pipeline(ppl)
 
         # a wrapper function which logs the termination message when the
         # pipeline has finished running
@@ -273,6 +282,10 @@ class PipelineManager(object):
 
     def stop_pipeline(self, name):
         ppl = self.get_pipeline(name)
+
+        # check if already running
+        if not self._running_processes.has_key(name):
+            raise Exception("Can't stop %s, it doesn't seem to be running" % name)
 
         p = self._running_processes[name]
         p.terminate()
