@@ -24,13 +24,13 @@ class IndexHandler(tornado.web.RequestHandler):
 event_server = LogEventServer()
 pipelines = PipelineManager(event_server)
 
-pipelines.add_pipeline(backend.Pipeline('Ppl1'))
+#pipelines.add_pipeline(backend.Pipeline('Ppl1'))
 #num = backend.Numbers()
 #lg = backend.ToLog()
 #pipelines.get_pipeline("Ppl1").add_unit(num, "numnum")
 #pipelines.get_pipeline("Ppl1").add_unit(lg, "lglg")
 #pipelines.get_pipeline("Ppl1").connect("numnum", "two", "lglg", "inp")
-pipelines.add_pipeline(backend.Pipeline('Ppl2'))
+#pipelines.add_pipeline(backend.Pipeline('Ppl2'))
 
 #import pdb; pdb.set_trace()
 
@@ -166,6 +166,9 @@ class PipelineEventHandler(PipelinesEventHandler):
         elif message == "STOP":
             print "stopping %s" % self.ppl.name
             pipelines.stop_pipeline(self.ppl.name)
+        elif message == "SAVE":
+            print "saving %s" % self.ppl.name
+            pipelines.save_pipeline(self.ppl.name)
         else:
             print message
 

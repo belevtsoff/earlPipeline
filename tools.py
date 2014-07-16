@@ -4,6 +4,8 @@ import re
 import multiprocessing as mp
 from logutils.queue import QueueHandler, QueueListener
 from functools import wraps
+import pickle
+import os
 
 class Status(object):
     FINISHED = 1
@@ -136,6 +138,32 @@ class Runnable(object):
         something when status property is changed"""
         pass
 
+    def __getstate__(self):
+        """Remove or comvert unpicklabe objects before pickling"""
+        __dict__ = dict(self.__dict__) # copy
+
+        # convert synchronized status values to normal integers when pickling
+        __dict__['_status'] = self.status
+
+        # ignore some of the auxiliary fields
+        # queue_handler
+        if __dict__.has_key("queue_handler"):
+            del __dict__["queue_handler"]
+        # temporary log
+        if __dict__.has_key("_log"):
+            del __dict__["_log"]
+
+        return __dict__
+
+    def __setstate__(self, state):
+        """Restore unpicklable objects when unpickling"""
+        self.__dict__.update(state)
+
+        # convert status values back to mp.Value wrappers
+        self._status = mp.Value('i', state['_status'])
+
+
+
 # TODO: make it store and read from disc
 # TODO: add docstrings here
 # TODO: put it in a separate file
@@ -148,9 +176,28 @@ class PipelineManager(object):
         self.event_server = event_server
         self.event_server.start()
 
+        self.pipelines_folder = 'pipelines'
+
+        for fname in os.listdir(self.pipelines_folder):
+            path = os.path.join(self.pipelines_folder, fname)
+            if os.path.isfile(path) and path.lower().endswith(".ppl"):
+                self.load_pipeline(path)
+
     def __iter__(self):
         for ppl in self._pipelines.values():
             yield ppl
+
+    def load_pipeline(self, fname):
+        with open(fname) as f:
+            ppl = pickle.load(f)
+        self.add_pipeline(ppl)
+
+    def save_pipeline(self, name):
+        fname = os.path.join(self.pipelines_folder, name+".ppl")
+        ppl = self.get_pipeline(name)
+
+        with open(fname, 'w') as f:
+            pickle.dump(ppl, f)
 
     def add_pipeline(self, ppl):
         self._pipelines[ppl.name] = ppl
