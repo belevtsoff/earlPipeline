@@ -277,10 +277,10 @@ class PipelineManager(object):
         p = self._running_processes[name]
         p.terminate()
 
+        # this will automatically invoke stopping code via stop handler
         ppl.status = Status.FAILED
-        ppl.logger.error("Interrupted by user")
 
-        self.on_pipeline_stop(ppl)
+        ppl.logger.error("Interrupted by user")
 
     def on_pipeline_stop(self, ppl):
         del self._running_processes[ppl.name]
