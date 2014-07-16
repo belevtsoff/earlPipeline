@@ -245,6 +245,18 @@ App.PipelineController = Ember.ObjectController.extend(App.Runnable, {
             alert("This functionality is not yet implemented");
         },
 
+        remove: function() {
+            var model = this.get('model');
+            var that = this;
+            model.deleteRecord();
+            model.save().then(function(success) {
+                that.transitionToRoute('pipelines');
+            }, function(error) {
+                BootstrapDialog.alert({message: "Couldn't delete the pipeline. Check out console for details", type: "type-warning"});
+                console.log(error.responseText);
+            });
+        },
+
         /* Handles a server event, sent via the websocket. The message is
          * supposed to be a JSON-parsable string, of the object of the
          * following forms:
