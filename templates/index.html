@@ -71,13 +71,17 @@
                     {{!/each}}
                 </tbody>
             </table>
+            <hr />
+
+            {{!link-to 'New Pipeline' "pipelines.new" class="btn btn-primary"}}
+            
         </div>
 
         {{!outlet}}
     </script>
 
     <script type="text/x-handlebars" data-template-name="pipelines/new">
-        {{!!Just a stub template. Nothing to write here so far}}
+        {{!view App.NewPipelineView}}
     </script>
 
     <script type="text/x-handlebars" data-template-name="pipeline">

@@ -48,6 +48,22 @@ App.PipelinesRoute = Ember.Route.extend({
         // cleanup
         willTransition: function(transition) {
             this.get('controller.event_bus').close();
+        },
+
+        /* Create new pipeline */
+        create: function(name) {
+            var ppl = this.store.createRecord('pipeline', {
+                id: name,
+            });
+
+            var that = this;
+            ppl.save().then(function(ppl) {
+                that.transitionTo('pipeline', ppl);
+            }, function(error) {
+                BootstrapDialog.alert({message: "Failed to create new pipeline. Check out console for details", type: "type-warning"});
+                that.store.unloadRecord(ppl);
+                that.transitionTo('pipelines');
+            });
         }
     }
 })

@@ -42,6 +42,7 @@ App.PipelinesController = Ember.ArrayController.extend({
     }
 });
 
+
 App.Runnable = Ember.Mixin.create({
     isRunning: null,
     hasFailed: null,
