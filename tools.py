@@ -182,7 +182,12 @@ class PipelineManager(object):
                 lambda evt: self.pipeline_stopper_callback(evt))
         self.event_server.add_client("PplStopHandler", stop_handler)
 
-        # debug handler
+        # temporary log callback
+        log_handler = CallbackHandler(
+                lambda evt: self.pipeline_logger_callback(evt))
+        self.event_server.add_client("PplLoggerCallback", log_handler)
+
+        ## debug handler
         #class DebugHandler(logging.Handler):
             #def __init__(self, pplman):
                 #super(DebugHandler, self).__init__()
@@ -221,14 +226,7 @@ class PipelineManager(object):
 
     def add_pipeline(self, ppl):
         self._pipelines[ppl.name] = ppl
-
-        # add log handlers
-        obj_handler = ObjectLogHandler(ppl)
-        ppl.obj_handler_id = "%s.ObjectLogHandler" % ppl.name
         ppl._log = []
-
-        self.event_server.add_client(ppl.obj_handler_id, obj_handler)
-
 
     def get_pipeline(self, name):
         return self._pipelines[name]
@@ -299,6 +297,17 @@ class PipelineManager(object):
                 ppl = self.get_pipeline(name)
                 if status == Status.FINISHED or status == Status.FAILED:
                     self.on_pipeline_stop(ppl)
+
+    def pipeline_logger_callback(self, event):
+        """Stores all pipeline events to a _log entry of a corresponding
+        pipeline object"""
+        if event['type'] == 'log':
+            data = event['data']
+            name = data['src']['pipeline']
+            if name:
+                ppl = self.get_pipeline(name)
+                ppl._log.append(data)
+
 
 
 
@@ -392,20 +401,6 @@ class WebSocketLogHandler(logging.Handler):
     def emit(self, record):
         res = EventTool.parse_log_record(record)
         self.stream.write_message(res)
-
-class ObjectLogHandler(logging.Handler):
-    """Simply writes all logged caught event to a specified attribute of the
-    passed object instance"""
-    def __init__(self, obj, attr="_log"):
-        super(ObjectLogHandler, self).__init__()
-        self.obj = obj
-        self.attr = attr
-
-    def emit(self, record):
-        data = EventTool.parse_log_record(record)
-        if data['type'] == 'log':
-            if data['data']['src']['pipeline'] == self.obj.name:
-                getattr(self.obj, self.attr).append(data['data'])
 
 
 class CallbackHandler(logging.Handler):
