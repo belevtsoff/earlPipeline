@@ -168,7 +168,7 @@ class Runnable(object):
 # TODO: add docstrings here
 # TODO: put it in a separate file
 class PipelineManager(object):
-    def __init__(self, event_server, data_path = 'pipelines'):
+    def __init__(self, event_server, pipelines_folder = 'pipelines'):
         # dict {ppl_name : ppl_instance}
         self._pipelines = {}
         self._running_processes = {}
@@ -201,7 +201,7 @@ class PipelineManager(object):
 
         #self.event_server.add_client("debugger", DebugHandler(self))
 
-        self.pipelines_folder = 'pipelines'
+        self.pipelines_folder = pipelines_folder
 
         for fname in os.listdir(self.pipelines_folder):
             path = os.path.join(self.pipelines_folder, fname)

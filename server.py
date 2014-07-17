@@ -187,7 +187,7 @@ handlers = [
 
 # Convenience python API
 
-def run(port=5000, address='', debug=True):
+def run(port=5000, address='', debug=True, pipeline_folder='pipelines'):
     if not backend:
         raise Exception("Cannot start the server: backend is not set. Use 'set_backend' method to set the backend before running the server")
 
@@ -203,7 +203,7 @@ def run(port=5000, address='', debug=True):
     event_server = LogEventServer()
 
     global pipelines
-    pipelines = PipelineManager(event_server)
+    pipelines = PipelineManager(event_server, pipeline_folder)
 
     parse_command_line()
     app.listen(options.port, address)
