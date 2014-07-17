@@ -359,3 +359,63 @@ App.OutputView = Ember.View.extend({
 
     }.observes('controller.log_text'),
 });
+
+
+/* A dialog window to create new pipeline */
+App.NewPipelineView = Ember.View.extend({
+    tagName: "div",
+    didInsertElement: function() {
+
+        var id = "pipeline_name";
+        var placeholder = "UnnamedPpl";
+        var that = this;
+
+        var form = $("<form />")
+            .addClass('form-horizontal')
+            .attr({role: 'form'});
+
+        var label = $("<label />")
+            .attr({for: id})
+            .addClass('control-label')
+            .append("Pipeline name")
+
+        var input = $('<input />')
+            .addClass('form-control')
+            .attr({
+                id: id,
+                name: "name",
+                type: 'text',
+                placeholder: placeholder,
+            })
+
+        var message = form.append(label).append(input);
+        
+        var dialog = new BootstrapDialog({
+            title: "Create new pipeline",
+            message: message,
+            autodestroy: true,
+
+            buttons: [{
+                label: 'Create',
+                action: function(dialog) {
+                    var form = dialog.getMessage();
+                    var name = form.serializeArray()[0].value;
+
+                    if(!name)
+                        name = placeholder;
+
+                    that.get('controller').send('create', name);
+                        
+                    dialog.close();
+                }
+            }, {
+                label: 'Cancel',
+                action: function(dialog) {
+                    dialog.close();
+                }
+            }],
+        });
+
+        dialog.open();
+    }
+})

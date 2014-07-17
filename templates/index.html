@@ -71,13 +71,17 @@
                     {{!/each}}
                 </tbody>
             </table>
+            <hr />
+
+            {{!link-to 'New Pipeline' "pipelines.new" class="btn btn-primary"}}
+            
         </div>
 
         {{!outlet}}
     </script>
 
     <script type="text/x-handlebars" data-template-name="pipelines/new">
-        {{!!Just a stub template. Nothing to write here so far}}
+        {{!view App.NewPipelineView}}
     </script>
 
     <script type="text/x-handlebars" data-template-name="pipeline">
@@ -169,11 +173,11 @@
         <font size="4" class="ppl-name">{{!App.currentPipeline.id}}</font>
 
         <div class="pull-right">
-            <button class="btn btn-default">
+            <button class="btn btn-default" {{!action "save"}}>
                 <span class="glyphicon glyphicon-save"></span> 
                 Save
             </button>
-            <button class="btn btn-danger" style="">
+            <button class="btn btn-danger" {{!action "remove"}}>
                 <span class="glyphicon glyphicon-remove"></span> 
                 Delete
             </button>

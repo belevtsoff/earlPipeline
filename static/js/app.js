@@ -48,6 +48,22 @@ App.PipelinesRoute = Ember.Route.extend({
         // cleanup
         willTransition: function(transition) {
             this.get('controller.event_bus').close();
+        },
+
+        /* Create new pipeline */
+        create: function(name) {
+            var ppl = this.store.createRecord('pipeline', {
+                id: name,
+            });
+
+            var that = this;
+            ppl.save().then(function(ppl) {
+                that.transitionTo('pipeline', ppl);
+            }, function(error) {
+                BootstrapDialog.alert({message: "Failed to create new pipeline. Check out console for details", type: "type-warning"});
+                that.store.unloadRecord(ppl);
+                that.transitionTo('pipelines');
+            });
         }
     }
 })
@@ -83,8 +99,6 @@ App.PipelineRoute = Em.Route.extend({
     },
 
     setupController: function(pplController, pplModel) {
-        console.log('setup');
-
         // Update the 'currentPipeline' property. This is needed to form proper
         // server API calls when working with units/edges. Fired whenever the
         // route is changed

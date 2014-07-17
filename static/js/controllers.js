@@ -42,6 +42,7 @@ App.PipelinesController = Ember.ArrayController.extend({
     }
 });
 
+
 App.Runnable = Ember.Mixin.create({
     isRunning: null,
     hasFailed: null,
@@ -235,6 +236,26 @@ App.PipelineController = Ember.ObjectController.extend(App.Runnable, {
         /* Stop this pipeline, if running */
         stop: function() {
             this.get("event_bus").send("STOP");
+        },
+
+        save: function() {
+            this.get("event_bus").send("SAVE");
+        },
+
+        notImplemented: function() {
+            alert("This functionality is not yet implemented");
+        },
+
+        remove: function() {
+            var model = this.get('model');
+            var that = this;
+            model.deleteRecord();
+            model.save().then(function(success) {
+                that.transitionToRoute('pipelines');
+            }, function(error) {
+                BootstrapDialog.alert({message: "Couldn't delete the pipeline. Check out console for details", type: "type-warning"});
+                console.log(error.responseText);
+            });
         },
 
         /* Handles a server event, sent via the websocket. The message is

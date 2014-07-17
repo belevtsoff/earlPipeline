@@ -4,6 +4,8 @@ import re
 import multiprocessing as mp
 from logutils.queue import QueueHandler, QueueListener
 from functools import wraps
+import pickle
+import os
 
 class Status(object):
     FINISHED = 1
@@ -136,6 +138,32 @@ class Runnable(object):
         something when status property is changed"""
         pass
 
+    def __getstate__(self):
+        """Remove or comvert unpicklabe objects before pickling"""
+        __dict__ = dict(self.__dict__) # copy
+
+        # convert synchronized status values to normal integers when pickling
+        __dict__['_status'] = self.status
+
+        # ignore some of the auxiliary fields
+        # queue_handler
+        if __dict__.has_key("queue_handler"):
+            del __dict__["queue_handler"]
+        # temporary log
+        if __dict__.has_key("_log"):
+            del __dict__["_log"]
+
+        return __dict__
+
+    def __setstate__(self, state):
+        """Restore unpicklable objects when unpickling"""
+        self.__dict__.update(state)
+
+        # convert status values back to mp.Value wrappers
+        self._status = mp.Value('i', state['_status'])
+
+
+
 # TODO: make it store and read from disc
 # TODO: add docstrings here
 # TODO: put it in a separate file
@@ -145,23 +173,72 @@ class PipelineManager(object):
         self._pipelines = {}
         self._running_processes = {}
 
+        # create event server and add necessary handlers
         self.event_server = event_server
         self.event_server.start()
+
+        # stopping handler
+        stop_handler = CallbackHandler(
+                lambda evt: self.pipeline_stopper_callback(evt))
+        self.event_server.add_client("PplStopHandler", stop_handler)
+
+        # temporary log callback
+        log_handler = CallbackHandler(
+                lambda evt: self.pipeline_logger_callback(evt))
+        self.event_server.add_client("PplLoggerCallback", log_handler)
+
+        ## debug handler
+        #class DebugHandler(logging.Handler):
+            #def __init__(self, pplman):
+                #super(DebugHandler, self).__init__()
+                #self.pplman = pplman
+
+            #def emit(self, record):
+                #print record.msg
+                #print self.pplman._running_processes
+                #print self.pplman.event_server._clients
+                #print self.pplman.event_server._pipelines
+
+        #self.event_server.add_client("debugger", DebugHandler(self))
+
+        self.pipelines_folder = 'pipelines'
+
+        for fname in os.listdir(self.pipelines_folder):
+            path = os.path.join(self.pipelines_folder, fname)
+            if os.path.isfile(path) and path.lower().endswith(".ppl"):
+                self.load_pipeline(path)
 
     def __iter__(self):
         for ppl in self._pipelines.values():
             yield ppl
 
+    def load_pipeline(self, fname):
+        with open(fname) as f:
+            ppl = pickle.load(f)
+        self.add_pipeline(ppl)
+
+    def save_pipeline(self, name):
+        fname = os.path.join(self.pipelines_folder, name+".ppl")
+        ppl = self.get_pipeline(name)
+
+        with open(fname, 'w') as f:
+            pickle.dump(ppl, f)
+
+    def remove_pipeline(self, name):
+        # check if not running
+        if self._running_processes.has_key(name):
+            raise Exception("Can't delete %s, it is still running" % name)
+
+        del self._pipelines[name]
+
+        # try to find the file and remove it
+        fname = os.path.join(self.pipelines_folder, name+".ppl")
+        if os.path.exists(fname):
+            os.remove(fname)
+
     def add_pipeline(self, ppl):
         self._pipelines[ppl.name] = ppl
-
-        # add log handlers
-        obj_handler = ObjectLogHandler(ppl)
-        ppl.obj_handler_id = "%s.ObjectLogHandler" % ppl.name
         ppl._log = []
-
-        self.event_server.add_client(id, obj_handler)
-
 
     def get_pipeline(self, name):
         return self._pipelines[name]
@@ -169,23 +246,20 @@ class PipelineManager(object):
     def start_pipeline(self, name):
         ppl = self.get_pipeline(name)
 
-        # clean the object log
+        # check if not already running
+        if self._running_processes.has_key(name):
+            raise Exception("Can't start %s, it is still running" % name)
+
+        # clear the object log
         ppl._log = []
 
-        # if hasn't been started before
-        # TODO: stupid code
-        if not name in self._running_processes.keys():
-            self.event_server.add_pipeline(ppl)
-        else:
-            p = self._running_processes[name]
-            if p.is_alive():
-                raise Exception("Can't start. The pipeline %s is still running" % name)
+        self.event_server.add_pipeline(ppl)
 
         # a wrapper function which logs the termination message when the
         # pipeline has finished running
         def run_wrapper():
             try:
-                ppl.logger.info("Staring...")
+                ppl.logger.info("Starting...")
                 ppl.run()
             except:
                 status = Status.FAILED
@@ -200,6 +274,7 @@ class PipelineManager(object):
                 if msg:
                     ppl.logger.error(msg)
 
+
         p = mp.Process(target=run_wrapper)
         ppl.status = Status.RUNNING
         p.start()
@@ -208,14 +283,45 @@ class PipelineManager(object):
     def stop_pipeline(self, name):
         ppl = self.get_pipeline(name)
 
+        # check if already running
+        if not self._running_processes.has_key(name):
+            raise Exception("Can't stop %s, it doesn't seem to be running" % name)
+
         p = self._running_processes[name]
         p.terminate()
-        del self._running_processes[ppl.name]
 
+        # this will automatically invoke stopping code via stop handler
         ppl.status = Status.FAILED
+
         ppl.logger.error("Interrupted by user")
 
+    def on_pipeline_stop(self, ppl):
+        del self._running_processes[ppl.name]
         self.event_server.remove_pipeline(ppl)
+        
+    def pipeline_stopper_callback(self, event):
+        """Process a parsed log event and call 'on_pipeline_stop', if has
+        stopped for some reason"""
+        if event['type'] == "status":
+            data = event['data']
+            if data['target_type'] == 'pipeline':
+                name = data['target']
+                status = int(data['status'])
+                ppl = self.get_pipeline(name)
+                if status == Status.FINISHED or status == Status.FAILED:
+                    self.on_pipeline_stop(ppl)
+
+    def pipeline_logger_callback(self, event):
+        """Stores all pipeline events to a _log entry of a corresponding
+        pipeline object"""
+        if event['type'] == 'log':
+            data = event['data']
+            name = data['src']['pipeline']
+            if name:
+                ppl = self.get_pipeline(name)
+                ppl._log.append(data)
+
+
 
 
 def if_running(f):
@@ -309,16 +415,17 @@ class WebSocketLogHandler(logging.Handler):
         res = EventTool.parse_log_record(record)
         self.stream.write_message(res)
 
-class ObjectLogHandler(logging.Handler):
-    """Simply writes all logged caught event to a specified attribute of the
-    passed object instance"""
-    def __init__(self, obj, attr="_log"):
-        super(ObjectLogHandler, self).__init__()
-        self.obj = obj
-        self.attr = attr
+
+class CallbackHandler(logging.Handler):
+    """Calls an external function upon log event arrival. The
+    callback is invoked with a parsed log record as a
+    parameter"""
+    def __init__(self, callback):
+        super(CallbackHandler, self).__init__()
+        self.callback = callback
 
     def emit(self, record):
         data = EventTool.parse_log_record(record)
-        if data['type'] == 'log':
-            if data['data']['src']['pipeline'] == self.obj.name:
-                getattr(self.obj, self.attr).append(data['data'])
+        self.callback(data)
+
+

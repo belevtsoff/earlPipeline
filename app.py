@@ -24,14 +24,6 @@ class IndexHandler(tornado.web.RequestHandler):
 event_server = LogEventServer()
 pipelines = PipelineManager(event_server)
 
-pipelines.add_pipeline(backend.Pipeline('Ppl1'))
-#num = backend.Numbers()
-#lg = backend.ToLog()
-#pipelines.get_pipeline("Ppl1").add_unit(num, "numnum")
-#pipelines.get_pipeline("Ppl1").add_unit(lg, "lglg")
-#pipelines.get_pipeline("Ppl1").connect("numnum", "two", "lglg", "inp")
-pipelines.add_pipeline(backend.Pipeline('Ppl2'))
-
 #import pdb; pdb.set_trace()
 
 def find_by_attr(seq, attr, value):
@@ -47,10 +39,25 @@ class PipelinesHandler(tornado.web.RequestHandler):
         pplmodels = [ppl.to_dict() for ppl in pipelines]
         self.write({'pipelines':pplmodels})
 
+    def post(self):
+        req = tornado.escape.json_decode(self.request.body)['pipeline']
+        name = req['id']
+        ppl = backend.Pipeline(name)
+        pipelines.add_pipeline(ppl)
+
+        self.write({'pipeline': ppl.to_dict()})
+
+
 class PipelineHandler(tornado.web.RequestHandler):
     def get(self, pid):
         ppl = pipelines.get_pipeline(pid)
         self.write({'pipeline': ppl.to_dict()})
+
+    def delete(self, pid):
+        pipelines.remove_pipeline(pid)
+        print "deleted %s" % pid
+        self.write({})
+
 
 class MetaUnitsHandler(tornado.web.RequestHandler):
     def get(self):
@@ -166,6 +173,9 @@ class PipelineEventHandler(PipelinesEventHandler):
         elif message == "STOP":
             print "stopping %s" % self.ppl.name
             pipelines.stop_pipeline(self.ppl.name)
+        elif message == "SAVE":
+            print "saving %s" % self.ppl.name
+            pipelines.save_pipeline(self.ppl.name)
         else:
             print message
 
