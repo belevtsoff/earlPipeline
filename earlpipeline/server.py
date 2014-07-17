@@ -10,6 +10,8 @@ import tornado.concurrent
 from tools import PipelineManager, WebSocketLogHandler, LogEventServer
 from tornado.options import define, options, parse_command_line
 
+import logging
+
 backend = None
 pipelines = None
 
@@ -204,6 +206,8 @@ def run(port=5000, address='', debug=True, pipeline_folder='pipelines'):
 
     global pipelines
     pipelines = PipelineManager(event_server, pipeline_folder)
+
+    logging.info('starting server')
 
     parse_command_line()
     app.listen(options.port, address)

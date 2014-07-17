@@ -9,7 +9,7 @@ equipping it with a simple engine
 from abc import ABCMeta, abstractmethod, abstractproperty
 import inspect
 import logging
-import tools
+from earlpipeline import tools
 
 ROOT_LOG_NAME = "backend"
 

@@ -1,7 +1,7 @@
 # Example backend, which performs simple calculations. It implements
 # simple_graph_engine API
 
-from base_simple_engine import Pipeline, Unit, InPort, OutPort, Parameter
+from earlpipeline.backends.base_simple_engine import Pipeline, Unit, InPort, OutPort, Parameter
 import time
 
 class Number(Unit):
