@@ -44,7 +44,7 @@ Then, run the script::
     $ python2 server.py
 
 If everything went well, you should now be able to navigate to [http://localhost:5000](http://localhost:5000), click
-"New Pipeline", and play around with GUI.
+"New Pipeline", and play around with GUI. You might also have a look at ```earlpipeline/backends/calculator.py``` to see how backends are implemented.
 
 This is how your pipeline might look like:
 
