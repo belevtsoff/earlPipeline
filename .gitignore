@@ -2,3 +2,6 @@
 *.swo
 vim_ses
 *.pyc
+*.egg-info
+build
+dist
