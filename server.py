@@ -1,6 +1,4 @@
-import backends.calculator as backend
 import os
-import time
 
 import tornado.escape
 import tornado.ioloop
@@ -10,21 +8,10 @@ import tornado.gen
 import tornado.concurrent
 
 from tools import PipelineManager, WebSocketLogHandler, LogEventServer
-
 from tornado.options import define, options, parse_command_line
 
-define("port", default=5000, help="run on the given port", type=int)
-define("debug", default=True)
-
-class IndexHandler(tornado.web.RequestHandler):
-    def get(self):
-        self.render("index.html")
-
-
-event_server = LogEventServer()
-pipelines = PipelineManager(event_server)
-
-#import pdb; pdb.set_trace()
+backend = None
+pipelines = None
 
 def find_by_attr(seq, attr, value):
     try:
@@ -33,6 +20,10 @@ def find_by_attr(seq, attr, value):
         raise KeyError('%s not found' % value)
 
 ## Server RESTfull API
+
+class IndexHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.render("index.html")
 
 class PipelinesHandler(tornado.web.RequestHandler):
     def get(self):
@@ -193,15 +184,38 @@ handlers = [
     (r'/api/pipelines/([^/]*)/event_bus', PipelineEventHandler)
 ]
 
-app = tornado.web.Application(handlers,
-        debug=options.debug,
-        template_path=os.path.join(os.path.dirname(__file__), "templates"),
-        static_path=os.path.join(os.path.dirname(__file__), "static")
-        )
 
-clients = {}
+# Convenience python API
+
+def run(port=5000, address='', debug=True):
+    if not backend:
+        raise Exception("Cannot start the server: backend is not set. Use 'set_backend' method to set the backend before running the server")
+
+    define("port", default=port, help="run on the given port", type=int)
+    define("debug", default=debug)
+
+    app = tornado.web.Application(handlers,
+            debug=options.debug,
+            template_path=os.path.join(os.path.dirname(__file__), "templates"),
+            static_path=os.path.join(os.path.dirname(__file__), "static")
+            )
+
+    event_server = LogEventServer()
+
+    global pipelines
+    pipelines = PipelineManager(event_server)
+
+    parse_command_line()
+    app.listen(options.port, address)
+    tornado.ioloop.IOLoop.instance().start()
+
+def set_backend(new_backend):
+    global backend
+
+    if backend:
+        raise Exception("Backend is already set")
+
+    backend = new_backend
 
 if __name__ == '__main__':
-    parse_command_line()
-    app.listen(options.port)
-    tornado.ioloop.IOLoop.instance().start()
+    raise Exception("This server is not designed to be run standalone. You should import and set it up in a separate script. For further details, refer to the documentation")
