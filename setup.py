@@ -9,7 +9,7 @@ setup(
     #url='http://pypi.python.org/pypi/TowelStuff/',
     license='LICENSE',
     description='A simplistic backend-agnostic web application for visualizing and constructing modular data-processing pipelines',
-    long_description=open('README.md').read(),
+    long_description=open('README').read(),
     include_package_data=True,
     install_requires=[
         "tornado",
