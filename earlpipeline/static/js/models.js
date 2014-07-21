@@ -6,9 +6,11 @@ App.Pipeline = DS.Model.extend({
     status: DS.attr('string'),
     log: DS.attr(),
 
-    // abusing ember-data to make renaming easy. When persisting a record,
-    // ember-data doesn't send the new record's id, so one has to use
-    // additional field to convey that information to the server
+    // use this field to tell the server what to do with the received JSON
+    server_flag: DS.attr('string'),
+
+    // if 'server_flag' is set to 'rename' or 'clone', use this to inform
+    // server about which pipeline to rename/clone
     old_name: DS.attr('string'), 
 });
 

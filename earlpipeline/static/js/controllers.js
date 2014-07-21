@@ -270,6 +270,7 @@ App.PipelineController = Ember.ObjectController.extend(App.Runnable, {
 
                 // to understand what's happening in this line, look at
                 // pipeline's model definition
+                ppl.set("server_flag", "rename");
                 ppl.set("old_name", ppl.get('id')); 
 
                 ppl.set("id", new_name); 

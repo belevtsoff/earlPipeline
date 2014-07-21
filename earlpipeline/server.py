@@ -46,15 +46,16 @@ class PipelineHandler(tornado.web.RequestHandler):
         ppl = pipelines.get_pipeline(pid)
         self.write({'pipeline': ppl.to_dict()})
 
-    # for renaming
     def put(self, pid):
         req = tornado.escape.json_decode(self.request.body)['pipeline']
-        new_name = pid
-        old_name = req['old_name']
 
-        pipelines.rename_pipeline(old_name, new_name)
-        ppl = pipelines.get_pipeline(new_name)
-        self.write({'pipeline': ppl.to_dict()})
+        if req['server_flag'] == 'rename':
+            new_name = pid
+            old_name = req['old_name']
+
+            pipelines.rename_pipeline(old_name, new_name)
+            ppl = pipelines.get_pipeline(new_name)
+            self.write({'pipeline': ppl.to_dict()})
 
     def delete(self, pid):
         pipelines.remove_pipeline(pid)
