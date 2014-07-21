@@ -301,5 +301,56 @@ App.util = {
             if(!evt.wasClean)
                 alert('Event-stream connection to server is dropped for some reason! Try reloading the page.');
         }
+    },
+
+    /* Creates an input dialog with one input field */
+    input_dialog: function(id, title, label, placeholder, callback) {
+        var form = $("<form />")
+            .addClass('form-horizontal')
+            .attr({role: 'form'});
+
+        var label = $("<label />")
+            .attr({for: id})
+            .addClass('control-label')
+            .append(label)
+
+        var input = $('<input />')
+            .addClass('form-control')
+            .attr({
+                id: id,
+                name: "name",
+                type: 'text',
+                placeholder: placeholder,
+            })
+
+        var message = form.append(label).append(input);
+            
+        var dialog = new BootstrapDialog({
+            title: title, 
+            message: message,
+            autodestroy: true,
+
+            buttons: [{
+                label: 'Ok',
+                action: function(dialog) {
+                    var form = dialog.getMessage();
+                    var name = form.serializeArray()[0].value;
+
+                    if(!name)
+                        name = placeholder;
+
+                    callback(name);
+                        
+                    dialog.close();
+                }
+            }, {
+                label: 'Cancel',
+                action: function(dialog) {
+                    dialog.close();
+                }
+            }],
+        });
+
+        return dialog;
     }
 }
