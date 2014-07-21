@@ -258,6 +258,35 @@ App.PipelineController = Ember.ObjectController.extend(App.Runnable, {
             });
         },
 
+        rename: function() {
+            var id = "new_pipeline_name";
+            var placeholder = "NewName";
+            var that = this;
+            var title = "Rename pipeline";
+            var label = "New pipeline name:";
+            
+            var callback = function(new_name) {
+                var ppl = that.get('model');
+
+                // to understand what's happening in this line, look at
+                // pipeline's model definition
+                ppl.set("old_name", ppl.get('id')); 
+
+                ppl.set("id", new_name); 
+
+                ppl.save().then(function(ppl) {}, function(error) {
+
+                    BootstrapDialog.alert({message: "Couldn't rename the pipeline. Check out console for details", type: "type-warning"});
+                console.log(error.responseText);
+                });
+            }
+            
+            dialog = App.util.input_dialog(id, title, label, placeholder, callback);
+                            
+
+            dialog.open();
+        },
+
         /* Handles a server event, sent via the websocket. The message is
          * supposed to be a JSON-parsable string, of the object of the
          * following forms:

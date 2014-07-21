@@ -5,6 +5,11 @@ App.Pipeline = DS.Model.extend({
     edges: DS.hasMany('edge', {async: true}),
     status: DS.attr('string'),
     log: DS.attr(),
+
+    // abusing ember-data to make renaming easy. When persisting a record,
+    // ember-data doesn't send the new record's id, so one has to use
+    // additional field to convey that information to the server
+    old_name: DS.attr('string'), 
 });
 
 App.Edge = DS.Model.extend({
