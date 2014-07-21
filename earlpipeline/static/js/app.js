@@ -304,7 +304,7 @@ App.util = {
     },
 
     /* Creates an input dialog with one input field */
-    input_dialog: function(id, title, label, placeholder, callback) {
+    input_dialog: function(id, title, label, placeholder, ok_callback, cancel_callback) {
         var form = $("<form />")
             .addClass('form-horizontal')
             .attr({role: 'form'});
@@ -339,13 +339,16 @@ App.util = {
                     if(!name)
                         name = placeholder;
 
-                    callback(name);
+                    ok_callback(name);
                         
                     dialog.close();
                 }
             }, {
                 label: 'Cancel',
                 action: function(dialog) {
+                    if(cancel_callback) {
+                        cancel_callback();
+                    }
                     dialog.close();
                 }
             }],

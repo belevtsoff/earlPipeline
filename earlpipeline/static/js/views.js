@@ -372,11 +372,15 @@ App.NewPipelineView = Ember.View.extend({
         var title = "Create new pipeline";
         var label = "Pipeline name:";
         
-        var callback = function(name) {
+        var ok_callback = function(name) {
             that.get('controller').send('create', name);
         }
         
-        dialog = App.util.input_dialog(id, title, label, placeholder, callback);
+        var cancel_callback = function() {
+            that.get('controller').transitionToRoute('pipelines');
+        }
+        
+        dialog = App.util.input_dialog(id, title, label, placeholder, ok_callback, cancel_callback);
                         
 
         dialog.open();
