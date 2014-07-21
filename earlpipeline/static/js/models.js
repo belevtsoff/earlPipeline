@@ -5,6 +5,13 @@ App.Pipeline = DS.Model.extend({
     edges: DS.hasMany('edge', {async: true}),
     status: DS.attr('string'),
     log: DS.attr(),
+
+    // use this field to tell the server what to do with the received JSON
+    server_flag: DS.attr('string'),
+
+    // if 'server_flag' is set to 'rename' or 'clone', use this to inform
+    // server about which pipeline to rename/clone
+    old_name: DS.attr('string'), 
 });
 
 App.Edge = DS.Model.extend({

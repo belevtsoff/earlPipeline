@@ -168,7 +168,7 @@ class Runnable(object):
 # TODO: add docstrings here
 # TODO: put it in a separate file
 class PipelineManager(object):
-    def __init__(self, event_server, data_path = 'pipelines'):
+    def __init__(self, event_server, pipelines_folder = 'pipelines'):
         # dict {ppl_name : ppl_instance}
         self._pipelines = {}
         self._running_processes = {}
@@ -201,7 +201,7 @@ class PipelineManager(object):
 
         #self.event_server.add_client("debugger", DebugHandler(self))
 
-        self.pipelines_folder = 'pipelines'
+        self.pipelines_folder = pipelines_folder
 
         for fname in os.listdir(self.pipelines_folder):
             path = os.path.join(self.pipelines_folder, fname)
@@ -218,8 +218,13 @@ class PipelineManager(object):
         self.add_pipeline(ppl)
 
     def save_pipeline(self, name):
-        fname = os.path.join(self.pipelines_folder, name+".ppl")
         ppl = self.get_pipeline(name)
+
+        if not hasattr(ppl, 'fname'):
+            fname = os.path.join(self.pipelines_folder, name+".ppl")
+            ppl.fname = fname
+        else:
+            fname = ppl.fname
 
         with open(fname, 'w') as f:
             pickle.dump(ppl, f)
@@ -229,16 +234,37 @@ class PipelineManager(object):
         if self._running_processes.has_key(name):
             raise Exception("Can't delete %s, it is still running" % name)
 
-        del self._pipelines[name]
+        ppl = self.get_pipeline(name)
 
         # try to find the file and remove it
-        fname = os.path.join(self.pipelines_folder, name+".ppl")
+        if not hasattr(ppl, 'fname'):
+            fname = os.path.join(self.pipelines_folder, name+".ppl")
+        else:
+            fname = ppl.fname
+
         if os.path.exists(fname):
             os.remove(fname)
+
+        del self._pipelines[name]
+        del ppl
 
     def add_pipeline(self, ppl):
         self._pipelines[ppl.name] = ppl
         ppl._log = []
+
+    def rename_pipeline(self, name, new_name):
+        ppl = self.get_pipeline(name)
+        
+        if not new_name in self._pipelines.keys():
+            ppl.name = new_name
+            self._pipelines[new_name] = ppl
+            del self._pipelines[name]
+
+            if name in self._running_processes.keys():
+                self._running_processes[new_name] = self._running_processes[name]
+                del self._running_processes[name]
+        else:
+            raise Exception("Cannot rename pipeline, name %s already exists" % new_name)
 
     def get_pipeline(self, name):
         return self._pipelines[name]

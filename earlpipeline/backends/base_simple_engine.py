@@ -8,11 +8,11 @@ and graph management systems. Otherwise, one should implement 'GenericUnit' and
 'GenericPipeline' directly.
 """
 
-from base import GenericUnit, GenericPipeline, Edge, Parameter
+from earlpipeline.backends.base import GenericUnit, GenericPipeline, Edge, Parameter
 from abc import ABCMeta, abstractmethod
 from bidict import namedbidict
 import inspect
-import tools
+from earlpipeline import tools
 
 UnitMap = namedbidict('UnitMap', 'by_name', 'by_instance')
 

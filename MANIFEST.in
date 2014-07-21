@@ -1,0 +1,3 @@
+recursive-include earlpipeline/static *
+recursive-include earlpipeline/templates *
+

@@ -1,6 +1,4 @@
-import backends.calculator as backend
 import os
-import time
 
 import tornado.escape
 import tornado.ioloop
@@ -10,21 +8,13 @@ import tornado.gen
 import tornado.concurrent
 
 from tools import PipelineManager, WebSocketLogHandler, LogEventServer
-
 from tornado.options import define, options, parse_command_line
 
-define("port", default=5000, help="run on the given port", type=int)
-define("debug", default=True)
+import logging
+import pickle
 
-class IndexHandler(tornado.web.RequestHandler):
-    def get(self):
-        self.render("index.html")
-
-
-event_server = LogEventServer()
-pipelines = PipelineManager(event_server)
-
-#import pdb; pdb.set_trace()
+backend = None
+pipelines = None
 
 def find_by_attr(seq, attr, value):
     try:
@@ -34,6 +24,10 @@ def find_by_attr(seq, attr, value):
 
 ## Server RESTfull API
 
+class IndexHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.render("index.html")
+
 class PipelinesHandler(tornado.web.RequestHandler):
     def get(self):
         pplmodels = [ppl.to_dict() for ppl in pipelines]
@@ -42,16 +36,45 @@ class PipelinesHandler(tornado.web.RequestHandler):
     def post(self):
         req = tornado.escape.json_decode(self.request.body)['pipeline']
         name = req['id']
-        ppl = backend.Pipeline(name)
+
+        # if cloning
+        if req['server_flag'] == 'clone':
+            src_ppl = pipelines.get_pipeline(req['old_name']);
+            ppl = self.piccopy(src_ppl)
+            ppl.name = name
+
+        # if just creating new
+        else:
+            ppl = backend.Pipeline(name)
+
         pipelines.add_pipeline(ppl)
 
         self.write({'pipeline': ppl.to_dict()})
+
+    def piccopy(self, ppl):
+        """
+        Use pickle to create a copy of the given pipelines. Pickle is used
+        here, because it knows how to handle some of the special fields of the
+        Pipeline class"""
+        new_ppl = pickle.loads(pickle.dumps(ppl))
+        return new_ppl
 
 
 class PipelineHandler(tornado.web.RequestHandler):
     def get(self, pid):
         ppl = pipelines.get_pipeline(pid)
         self.write({'pipeline': ppl.to_dict()})
+
+    def put(self, pid):
+        req = tornado.escape.json_decode(self.request.body)['pipeline']
+
+        if req['server_flag'] == 'rename':
+            new_name = pid
+            old_name = req['old_name']
+
+            pipelines.rename_pipeline(old_name, new_name)
+            ppl = pipelines.get_pipeline(new_name)
+            self.write({'pipeline': ppl.to_dict()})
 
     def delete(self, pid):
         pipelines.remove_pipeline(pid)
@@ -193,15 +216,40 @@ handlers = [
     (r'/api/pipelines/([^/]*)/event_bus', PipelineEventHandler)
 ]
 
-app = tornado.web.Application(handlers,
-        debug=options.debug,
-        template_path=os.path.join(os.path.dirname(__file__), "templates"),
-        static_path=os.path.join(os.path.dirname(__file__), "static")
-        )
 
-clients = {}
+# Convenience python API
+
+def run(port=5000, address='', debug=True, pipeline_folder='pipelines'):
+    if not backend:
+        raise Exception("Cannot start the server: backend is not set. Use 'set_backend' method to set the backend before running the server")
+
+    define("port", default=port, help="run on the given port", type=int)
+    define("debug", default=debug)
+
+    app = tornado.web.Application(handlers,
+            debug=options.debug,
+            template_path=os.path.join(os.path.dirname(__file__), "templates"),
+            static_path=os.path.join(os.path.dirname(__file__), "static")
+            )
+
+    event_server = LogEventServer()
+
+    global pipelines
+    pipelines = PipelineManager(event_server, pipeline_folder)
+
+    logging.info('starting server')
+
+    parse_command_line()
+    app.listen(options.port, address)
+    tornado.ioloop.IOLoop.instance().start()
+
+def set_backend(new_backend):
+    global backend
+
+    if backend:
+        raise Exception("Backend is already set")
+
+    backend = new_backend
 
 if __name__ == '__main__':
-    parse_command_line()
-    app.listen(options.port)
-    tornado.ioloop.IOLoop.instance().start()
+    raise Exception("This server is not designed to be run standalone. You should import and set it up in a separate script. For further details, refer to the documentation")
