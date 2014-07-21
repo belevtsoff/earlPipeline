@@ -11,6 +11,7 @@ from tools import PipelineManager, WebSocketLogHandler, LogEventServer
 from tornado.options import define, options, parse_command_line
 
 import logging
+import pickle
 
 backend = None
 pipelines = None
@@ -35,10 +36,28 @@ class PipelinesHandler(tornado.web.RequestHandler):
     def post(self):
         req = tornado.escape.json_decode(self.request.body)['pipeline']
         name = req['id']
-        ppl = backend.Pipeline(name)
+
+        # if cloning
+        if req['server_flag'] == 'clone':
+            src_ppl = pipelines.get_pipeline(req['old_name']);
+            ppl = self.piccopy(src_ppl)
+            ppl.name = name
+
+        # if just creating new
+        else:
+            ppl = backend.Pipeline(name)
+
         pipelines.add_pipeline(ppl)
 
         self.write({'pipeline': ppl.to_dict()})
+
+    def piccopy(self, ppl):
+        """
+        Use pickle to create a copy of the given pipelines. Pickle is used
+        here, because it knows how to handle some of the special fields of the
+        Pipeline class"""
+        new_ppl = pickle.loads(pickle.dumps(ppl))
+        return new_ppl
 
 
 class PipelineHandler(tornado.web.RequestHandler):
