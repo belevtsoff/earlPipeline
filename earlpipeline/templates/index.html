@@ -62,12 +62,12 @@
                         <tr {{!bind-attr class="isRunning:info hasFailed:danger"}}>
                             <td>{{!id}}</td>
                             <td>{{!statusToString status}}</td>
-                            <td>
-                                <p class="text-center">
+                            <td align="center">
+                                <div class="btn-group">
                                     <button class="btn btn-default" {{!action "clone"}}>Clone</button>
                                     <button class="btn btn-default" {{!action "rename"}}>Rename</button>
                                     {{!link-to 'Open' 'pipeline' id class="btn btn-primary"}}
-                                </p>
+                                </div>
                             </td>
                         </tr>
                     {{!/each}}
