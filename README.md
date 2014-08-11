@@ -36,7 +36,7 @@ from earlpipeline.backends import calculator
 
 if __name__ == '__main__':
     server.set_backend(calculator)
-    server.run(pipelines_folder=".")
+    server.run(pipeline_folder=".")
 ```
 
 Then, run the script::
