@@ -235,7 +235,7 @@ def run(port=5000, address='', debug=True, pipeline_folder='pipelines'):
     event_server = LogEventServer()
 
     global pipelines
-    pipelines = PipelineManager(event_server, pipeline_folder)
+    pipelines = PipelineManager(event_server, backend, pipeline_folder)
 
     logging.info('starting server')
 
