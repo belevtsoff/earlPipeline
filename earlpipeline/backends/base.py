@@ -397,4 +397,6 @@ class Parameter(object):
         return obj.get_parameter(self.name)
 
     def __set__(self, obj, value):
+        if not hasattr(obj, self.init_flag_attr):
+            setattr(obj, self.init_flag_attr, True)
         obj.set_parameter(self.name, value)
