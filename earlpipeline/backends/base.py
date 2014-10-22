@@ -143,10 +143,15 @@ class GenericUnit(tools.Runnable):
         res : dict
             JSON-serializable version of this class"""
 
+        tag = 'Unsorted'
+        if hasattr(cls, 'tag'):
+            tag = cls.tag
+
         res = {
                 'id': cls.__name__,
                 'inPorts': cls.get_in_ports(),
-                'outPorts': cls.get_out_ports()
+                'outPorts': cls.get_out_ports(),
+                'tag': tag
                 }
 
         return res
