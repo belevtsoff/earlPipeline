@@ -184,12 +184,37 @@ App.Item = Em.View.extend({
                     var form = dialog.getMessage();
                     var par_array = form.serializeArray();
 
+                    // account for checkboxes, which don't get shown if they
+                    // are unchecked
+                    var all_params = that.get('controller.parameters');
+                    for (var par_name in all_params) {
+                        var field = all_params[par_name];
+                        if(field.type == 'boolean') {
+                            var hasAttr = par_array.findBy('name', field.name);
+                            if(!hasAttr)
+                                par_array.pushObject(Ember.Object.create({
+                                    name: field.name,
+                                    value: "off"
+                                }));
+                        }
+                    }
+
                     // save parameters, if there are any available
                     if (par_array.length > 0) {
                         // grab values from all the fields in the form
                         var parameters = {};
                         $.each(par_array, function(i, field) {
-                            parameters[field.name] = field.value;
+                            switch(field.value) {
+                                case "on":
+                                    parameters[field.name] = true;
+                                    break;
+                                case "off":
+                                    parameters[field.name] = false;
+                                    break;
+                                default:
+                                    parameters[field.name] = field.value;
+                                    break;
+                            }
                         });
 
                         // send the data to the controller for persisting
@@ -281,11 +306,7 @@ App.Item = Em.View.extend({
             case 'input':
                 return this.createFieldInput(parameter, parameter.args.datatype);
             case 'boolean':
-                return this.createDropdownInput($.extend(parameter, {
-                args: {
-                    items: ['true', 'false']
-                }
-            }))
+                return this.createCheckboxInput(parameter);
             default:
                 return this.createFieldInput(parameter, 'text');
         }
@@ -338,6 +359,33 @@ App.Item = Em.View.extend({
 
         return input;
     },
+
+
+    /* Returns a DOM element for a checkbox input, using the contents of the
+     * provided 'parameter' argument.
+     *
+     * @param {Object} parameter Parameter to generate input for. Parameter
+     *     object is expected to be of the form, specified in the 'unit' model
+     *     description
+     *
+     * @returns {Object} DOM element for string
+     */
+    createCheckboxInput: function(parameter) {
+        var input = $('<input />')
+            .addClass('form-control')
+            .attr({
+                type: 'checkbox',
+                name: parameter.name,
+            });
+
+        if(parameter.value)
+            input.prop('checked', true);
+        else
+            input.prop('checked', false);
+
+        //return $("<div class='checkbox' />").append(input)
+        return input
+    }
 });
 
 

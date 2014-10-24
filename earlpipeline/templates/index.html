@@ -106,9 +106,16 @@
                 <span class="glyphicon glyphicon-plus"></span> Add Unit <span class="caret"></span>
             </a>
 
-            <ul class="dropdown-menu">
-                {{!#each itemController="metaUnit"}}
-                    <li><a style="cursor: pointer" {{!action "addToPipeline"}}>{{!id}}</a></li>
+            <ul class="dropdown-menu multi-level" role="menu" aria-labelledby="dropdownMenu">
+                {{!#each groupedMetaUnits}}
+                    <li class="dropdown-submenu">
+                        <a style="cursor: pointer" tabindex="-1">{{!tag}}</a>
+                        <ul class="dropdown-menu">
+                            {{!#each contents itemController="metaUnit"}}
+                                <li><a style="cursor: pointer" {{!action "addToPipeline"}}>{{!id}}</a></li>
+                            {{!/each}}
+                        </ul>
+                    </li>
                 {{!/each}}
             </ul>
         </div>

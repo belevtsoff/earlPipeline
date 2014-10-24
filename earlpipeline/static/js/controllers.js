@@ -68,7 +68,29 @@ App.Runnable = Ember.Mixin.create({
     }.observes('status'),
 });
 
-App.MetaUnitsController = Ember.ArrayController.extend();
+App.MetaUnitsController = Ember.ArrayController.extend({
+    sortProperties: ["id"],
+    groupedMetaUnits: function () {
+        /* Generate a sorted list of groups (by tag) with associated units in
+        * each group */
+        var result = [];
+
+        this.get('arrangedContent').forEach(function(item) {
+            var hasTag = result.findBy('tag', item.get('tag'));
+
+            if(!hasTag) {
+                result.pushObject(Ember.Object.create({
+                    tag: item.get('tag'),
+                    contents: []
+                }));
+            }
+
+            result.findBy('tag', item.get('tag')).get('contents').pushObject(item);
+        });
+
+        return result;
+    }.property('content.[]')
+});
 
 App.MetaUnitController = Ember.ObjectController.extend({
     needs: ['pipeline'], // where to add units

@@ -31,6 +31,7 @@ App.Edge = DS.Model.extend({
 App.MetaUnit = DS.Model.extend({
     inPorts: DS.attr(), // list of strings
     outPorts: DS.attr(), // list of strings
+    tag: DS.attr('string'),
 });
 
 App.Unit = DS.Model.extend({

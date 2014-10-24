@@ -168,8 +168,9 @@ class Runnable(object):
 # TODO: add docstrings here
 # TODO: put it in a separate file
 class PipelineManager(object):
-    def __init__(self, event_server, pipelines_folder = 'pipelines'):
+    def __init__(self, event_server, backend, pipelines_folder = 'pipelines'):
         # dict {ppl_name : ppl_instance}
+        self._backend = backend
         self._pipelines = {}
         self._running_processes = {}
 
@@ -213,8 +214,13 @@ class PipelineManager(object):
             yield ppl
 
     def load_pipeline(self, fname):
-        with open(fname) as f:
-            ppl = pickle.load(f)
+        if hasattr(self._backend.Pipeline, 'save') and \
+            hasattr(self._backend.Pipeline, 'load'):
+            ppl = self._backend.Pipeline.load(fname)
+        else:
+            with open(fname) as f:
+                ppl = pickle.load(f)
+
         self.add_pipeline(ppl)
 
     def save_pipeline(self, name):
@@ -226,8 +232,12 @@ class PipelineManager(object):
         else:
             fname = ppl.fname
 
-        with open(fname, 'w') as f:
-            pickle.dump(ppl, f)
+        if hasattr(self._backend.Pipeline, 'save') and \
+            hasattr(self._backend.Pipeline, 'load'):
+            self._backend.Pipeline.save(ppl, fname)
+        else:
+            with open(fname, 'w') as f:
+                pickle.dump(ppl, f)
 
     def remove_pipeline(self, name):
         # check if not running

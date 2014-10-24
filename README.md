@@ -7,7 +7,7 @@ The package consists of three parts:
 
 * frontend: web-based GUI, implemented in JavaScript, powered by Ember framework
 * web server: Python web server, built with Tornado
-* example backend: exmaple backend implementation (simple calculator)
+* example backend: example backend implementation (simple calculator)
 
 Installation
 ------------
@@ -36,7 +36,7 @@ from earlpipeline.backends import calculator
 
 if __name__ == '__main__':
     server.set_backend(calculator)
-    server.run(pipelines_folder=".")
+    server.run(pipeline_folder=".")
 ```
 
 Then, run the script::
