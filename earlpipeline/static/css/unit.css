@@ -2,7 +2,7 @@
 
 .unit { 
     border:1px solid Green !important;
-    width:7em;
+    /*width:15em;*/
     z-index:20;
     position:absolute;
     left: 200px;

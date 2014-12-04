@@ -40,12 +40,15 @@ App.Item = Em.View.extend({
     // TODO: unify this to a single action "sync"
     //this.get('controller').send("savePosition", this.jqel.position());
 
-    for(var i=0; i<this.ports.length; i++) {
-        // silently remove all graphic elements associated with the port.
-        // No event is fired because we don't wanna delete the edges
-        // in the database
-        jsPlumb.detachAllConnections(this.ports[i], {fireEvent: false});
-        jsPlumb.removeAllEndpoints(this.ports[i], {fireEvent: false});
+    for (var port_type in this.ports) {
+        var ports = this.ports[port_type];
+        for(var i=0; i<ports.length; i++) {
+            // silently remove all graphic elements associated with the port.
+            // No event is fired because we don't wanna delete the edges
+            // in the database
+            jsPlumb.detachAllConnections(ports[i], {fireEvent: false});
+            jsPlumb.removeAllEndpoints(ports[i], {fireEvent: false});
+        }
     }
 
     // clean-up settings dialogs
@@ -62,7 +65,7 @@ App.Item = Em.View.extend({
     var unit = this.get('controller');
     var inPorts = type.get('inPorts');
     var outPorts = type.get('outPorts');
-    this.ports = []; // helper variable containing all port instances
+    this.ports = {in: [], out: []}; // helper variable containing all port instances
     var id = this.get('controller.id');
     var dialog_id = id + "-settings";
 
@@ -152,12 +155,18 @@ App.Item = Em.View.extend({
             port.append(ports[i]);
 
             container.append(port);
-            jsPlumb.addEndpoint(port, $.extend({
-                uuid: App.util.create_endpoint_id(unit_id, ports[i])
-            }, style));
 
             // store port instance for easier cleanup
-            this.ports.pushObject(port);
+            this.ports[port_type].pushObject(port);
+        };
+
+        // draw port endpoints in a separate loop, after all the port names a
+        // printed and the unit has finished adjusting it's width. This
+        // prevents wrong alignment of endpoints for output ports.
+        for (var i=0; i<ports.length; i++) {
+            jsPlumb.addEndpoint(this.ports[port_type][i], $.extend({
+                uuid: App.util.create_endpoint_id(unit_id, ports[i])
+            }, style));
         };
     },
 
