@@ -36,18 +36,16 @@
 }
 
 .port {
-    padding: 0.2em 0.5em;
+    padding: 0.1em 0.5em;
 }
 
 .ports-in {
     float: left;
-    width: 50%;
     text-align: left;
 }
 
 .ports-out {
     float: right;
-    width: 50%;
     text-align: right;
 }
 
