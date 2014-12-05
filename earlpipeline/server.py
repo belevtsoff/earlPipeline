@@ -98,24 +98,37 @@ class UnitsHandler(tornado.web.RequestHandler):
         ppl = pipelines.get_pipeline(pid)
         req = tornado.escape.json_decode(self.request.body)['unit']
 
-        def create_name(ppl, unit_type, counter):
-            """Create unit name as lower cased typename plus some number. If
-            the name exists in the pipeline, the counter is recursively
-            incremented"""
-            name = unit_type.lower() + str(counter)
+        def create_name(ppl, unit_cls, counter):
+            """Create unit name. If the passed unit class contains the field
+            'instance_name_template', it is appended with the number of the
+            instances of the same type, already present in the pipeline.
+            Otherwise, the lower cased class name is used as a template for
+            instance naming."""
+
+            # default name
+            name_template = unit_cls.__name__.lower()
+
+            # change, if the field is specified
+            if hasattr(unit_cls, 'instance_name_template'):
+                if isinstance(unit_cls.instance_name_template, basestring) and\
+                    unit_cls.instance_name_template:
+                    name_template = unit_cls.instance_name_template
+
+            name = name_template + str(counter)
+
             try:
                 find_by_attr(ppl.units, 'name', name)
             except: # no such name
                 pass
             else: # if name exists, increment counter
-                name = create_name(ppl, unit_type, counter+1)
+                name = create_name(ppl, unit_cls, counter+1)
             finally:
                 return name
 
         cls = find_by_attr(backend.get_unit_types(), '__name__', req['type'])
         unit = cls()
 
-        name = create_name(ppl, req['type'], len(ppl.units))
+        name = create_name(ppl, cls, len(ppl.units))
         ppl.add_unit(unit, name)
         
         self.write({'unit': unit.to_dict()})
