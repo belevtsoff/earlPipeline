@@ -85,8 +85,8 @@ App.Item = Em.View.extend({
     }
 
     // Create and add ports
-    this.appendPorts(inPorts, 'in')
-    this.appendPorts(outPorts, 'out')
+    this.appendPorts(inPorts.sort(), 'in')
+    this.appendPorts(outPorts.sort(), 'out')
 
     // Create settings dialog
     this.appendSettingsDialog(dialog_id);
@@ -266,12 +266,19 @@ App.Item = Em.View.extend({
      * @returns {Object} DOM element
      */
     createForm: function(parameters) {
+        // sort parameters by names
+        var sorted_names = [];
+        for (var par_name in parameters)
+            sorted_names[sorted_names.length] = par_name;
+        sorted_names.sort();
+        
         // Generate the content of the dialog (i.e. parameter settings)
         var form = $('<form />')
             .addClass('form-horizontal')
             .attr({role: 'form'});
 
-        for (var par_name in parameters) {
+        for (var i = 0; i<sorted_names.length; i++) {
+            var par_name = sorted_names[i];
             var par_id = this.get('controller.id') + "-parameter-"
                 + par_name;
 
