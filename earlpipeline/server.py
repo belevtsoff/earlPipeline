@@ -147,7 +147,7 @@ class UnitHandler(tornado.web.RequestHandler):
         unit.left = req['left']
 
         for par_name, parameter in req['parameters'].items():
-            type_func = par_info[par_name]['value_type']
+            type_func = par_info[par_name]['before_write']
             unit.set_parameter(par_name, type_func(parameter['value']))
 
         self.write({'unit': unit.to_dict()})

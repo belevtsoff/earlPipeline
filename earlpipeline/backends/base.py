@@ -72,7 +72,8 @@ class GenericUnit(tools.Runnable):
             parameters[p.name] = {
                 'name': p.name,
                 'type': p.parameter_type,
-                'value_type': p.value_type, # for internal usage
+                'before_write': p.before_write, # for internal usage
+                'after_read': p.after_read, # for internal usage
                 'value': getattr(self, p.name),
                 'args': p.parameter_args
             }
@@ -120,7 +121,13 @@ class GenericUnit(tools.Runnable):
         # copy
         parameters = dict(self.parameters_info)
         for name, par in parameters.items():
-            del par['value_type'] # not for frontend
+            del par['before_write'] # not for frontend
+
+            # prepare value, before sending it to front-end
+            if par['after_read']:
+                par['value'] = par['after_read'](par['value'])
+
+            del par['after_read'] # not for frontend
 
         res = {
                 'id': self.name,
@@ -359,7 +366,8 @@ class Parameter(object):
     """Descriptor class for unit parameter. Is uses abstract methods
     'get_parameter' and 'set_parameter' on the underlying unit instance for
     getting/setting itself."""
-    def __init__(self, name, parameter_type, value_type, default_value, **parameter_args):
+    def __init__(self, name, parameter_type, before_write,
+            default_value, after_read=None, **parameter_args):
         """Initialize parameter.
 
         Parameters
@@ -369,11 +377,14 @@ class Parameter(object):
         parameter_type: str
             Type of the parameter. This field will be sent to the frontend to
             render appropriate input field for this parameter
-        value_type: type or callable
-            Python type or callable, used to cast the string, returned by the
-            frontend, to a valid python type
+        before_write: callable
+            Python callable, used to cast the string, returned by the
+            frontend, before writing it to python object
         default_value: object
             default value of the parameter
+        after_read: callable
+            Python callable, used to transform the python object read as a
+            property, before it is sent to the frontend as a string.
         parameter_args: kwargs (value: JSON string)
             Arguments to be passed to the front-end along with the parameter
             type. These arguments are used by front-end to render the
@@ -385,8 +396,9 @@ class Parameter(object):
         super(Parameter, self).__init__()
         self.name = name
         self.parameter_type = parameter_type
-        self.value_type = value_type
+        self.before_write = before_write
         self.default_value = default_value
+        self.after_read = after_read
         self.parameter_args = parameter_args
         self.init_flag_attr = '_%s_initialized' % self.name
 
