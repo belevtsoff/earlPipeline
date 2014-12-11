@@ -192,8 +192,7 @@ App.Item = Em.View.extend({
                     var form = dialog.getMessage();
                     var par_array = form.serializeArray();
 
-                    // account for checkboxes, which don't get shown if they
-                    // are unchecked
+                    // account for and buttons, which should be handled specially
                     var all_params = that.get('controller.parameters');
                     for (var par_name in all_params) {
                         var field = all_params[par_name];
@@ -204,6 +203,15 @@ App.Item = Em.View.extend({
                                     name: field.name,
                                     value: "off"
                                 }));
+                        }
+                        // source code parameters
+                        else if(field.type == 'code') {
+                            var code = form.find("[name|='" + field.name + "']")
+                                .attr('code');
+                            par_array.pushObject(Ember.Object.create({
+                                name: field.name,
+                                value: code,
+                            }));
                         }
                     }
 
@@ -322,6 +330,8 @@ App.Item = Em.View.extend({
                 return this.createFieldInput(parameter, parameter.args.datatype);
             case 'boolean':
                 return this.createCheckboxInput(parameter);
+            case 'code':
+                return this.createCodeInput(parameter);
             default:
                 return this.createFieldInput(parameter, 'text');
         }
@@ -387,7 +397,7 @@ App.Item = Em.View.extend({
      */
     createCheckboxInput: function(parameter) {
         var input = $('<input />')
-            .addClass('form-control')
+            //.addClass('form-control')
             .attr({
                 type: 'checkbox',
                 name: parameter.name,
@@ -400,7 +410,80 @@ App.Item = Em.View.extend({
 
         //return $("<div class='checkbox' />").append(input)
         return input
-    }
+    },
+
+    /* Returns a DOM element for a source code input. It consist of a button
+     * with a hidden source editing dialog which is fired by that button.
+     *
+     * @param {Object} parameter Parameter to generate input for. This
+     *     parameter can contain a field named 'lang' specifying the
+     *     programming language for syntax highlighting
+     *
+     * @returns {Object} DOM element for string
+     */
+    createCodeInput: function(parameter) {
+        var input = $('<button />')
+            .addClass('btn btn-default form-control')
+            .attr({
+                type: "button",
+                code: parameter.value,
+            })
+            .append('Edit source');
+
+
+        // on button click
+        input.click(function(e){
+            e.stopPropagation();
+
+            var textarea = $('<textarea />').append(input.attr("code"));
+
+            // create a separate dialog for code editing
+            var dialog = new BootstrapDialog({
+                title: "Editing Source",
+                autodestroy: true,
+                message: textarea,
+                data: {parameter: parameter},
+
+                onshow: function(dialog) {
+                    var lang = dialog.getData('parameter').args.lang;
+                    if(!lang)
+                        lang = 'python';
+
+                    var editor = CodeMirror.fromTextArea(dialog.getMessage()[0], {
+                        mode: lang,
+                        lineNumbers: true,
+                        matchBrackets: true,
+                        autoCloseBrackets: true,
+                    });
+                    dialog.setData('editorInstance', editor);
+                },
+
+                onshown: function(dialog) {
+                    var editor = dialog.getData('editorInstance');
+                    editor.refresh();
+                },
+
+                buttons: [{
+                    label: 'Done',
+                    action: function(dialog) {
+                        var editor = dialog.getData('editorInstance');
+                        var code = editor.getValue();
+                        input = input.attr({code: code});
+                        dialog.close();
+                    }
+                }, {
+                    label: 'Cancel',
+                    action: function(dialog) {
+                        dialog.close();
+                    }
+                }],
+            });       
+
+            dialog.open();
+        });
+
+        return input;
+    },
 });
 
 
